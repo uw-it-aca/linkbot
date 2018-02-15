@@ -147,7 +147,6 @@ def linkbot():
                         continue;
 
                     for bot in link_bots:
-                        print bot.match(j['text'])
                         for match in bot.match(j['text']):
                             try:
                                 slack.chat.post_message(
