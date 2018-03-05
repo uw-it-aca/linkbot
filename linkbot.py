@@ -28,6 +28,7 @@ from random import choice
 import simplejson as json
 import re
 import linkconfig
+import saml
 
 
 class LinkBotSeenException(Exception): pass
@@ -148,6 +149,7 @@ def linkbot():
 
                     for bot in link_bots:
                         for match in bot.match(j['text']):
+                            print j['text']+ " match!"
                             try:
                                 slack.chat.post_message(
                                     j['channel'],
@@ -156,7 +158,6 @@ def linkbot():
                                     parse='none')
                             except LinkBotSeenException:
                                 pass
-
                         bot.reset()
             except KeyError:
                 pass
