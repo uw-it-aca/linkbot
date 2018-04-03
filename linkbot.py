@@ -16,19 +16,15 @@ Configuration:
 Run linkbot
 
         $ python linkbot.py
-
-Todo:
-
 """
 
 from slacker import Slacker
 from websocket import create_connection
-from jira import JIRA
 from random import choice
 import simplejson as json
 import re
 import linkconfig
-import saml
+from linkbot import saml
 
 
 class LinkBotSeenException(Exception): pass
@@ -96,7 +92,6 @@ class LinkBot(object):
             '&': '&amp;',
             '<': '&lt;',
             '>': '&gt;',
-            '"': '&quot;'
         }
 
         return "".join(escaped.get(c,c) for c in text)
@@ -106,17 +101,21 @@ class JiraLinkBot(LinkBot):
     """Subclass LinkBot to customize response for JIRA links
 
     """
-    def _message_text(self, link):
-        msg = self._quip(link)
+    def message(self, link_label):
+        msg = super(JiraLinkBot, self).message(link_label)
         try:
-            jira = JIRA(self._conf['JIRA_HOST'],
-                        basic_auth=(self._conf['JIRA_LOGIN'],
-                                    self._conf['JIRA_PASSWORD']))
-            issue = jira.issue(ticket)
-            msg += '>>> %s' % self._escape_html(issue.fields.summary)
-        except:
-            pass
-
+            jira = saml.UwSamlJira()
+            issue = jira.issue(link_label)
+            summary = issue.fields.summary
+            get_name = lambda person: person and person.displayName or 'None'
+            reporter = '*Reporter* ' + get_name(issue.fields.reporter)
+            assignee = '*Assignee* ' + get_name(issue.fields.assignee)
+            status = '*Status* ' + issue.fields.status.name
+            lines = list(map(self._escape_html,
+                             [summary, reporter, assignee, status]))
+            msg = '\n> '.join([msg] + lines)
+        except Exception as e:
+            print(e)
         return msg
 
 
@@ -127,6 +126,7 @@ def linkbot():
     try:
         slack = Slacker(getattr(linkconfig, 'API_TOKEN'))
         robo_id = slack.auth.test().body.get('user_id')
+        saml.CREDENTIALS = getattr(linkconfig, 'UW_SAML_CREDENTIALS', ())
         response = slack.rtm.start()
         websocket = create_connection(response.body['url'])
 
@@ -144,12 +144,12 @@ def linkbot():
                 j = json.loads(rcv)
 
                 if j['type'] == 'message':
-                    if robo_id == j['user']:
-                        continue;
+                    if j.get('bot_id'):  # ignore all bots
+                        continue
 
                     for bot in link_bots:
                         for match in bot.match(j['text']):
-                            print j['text']+ " match!"
+                            print(j['text']+ " match!")
                             try:
                                 slack.chat.post_message(
                                     j['channel'],
@@ -163,10 +163,11 @@ def linkbot():
                 pass
 
     except Exception as ex:
-        print 'EXCEPTION: %s' % ex
+        print('EXCEPTION: %s' % ex)
         pass
 
     websocket.close()
 
 
-linkbot()
+if __name__ == '__main__':
+    linkbot()
