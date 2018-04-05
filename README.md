@@ -8,15 +8,20 @@ the following module variables:
 
     API_TOKEN='_API_Token_generated_from_your_Slack_instance_'
     UW_SAML_CREDENTIALS = ('_low-privilege-username_', '_password_')
+    SERVICE_NOW_CREDENTIALS = ('_api-account_', '_api-key_')
     LINKBOTS = [
         {
-            'MATCH': 'req[0-9]+',
-            'LINK': '<http://www.example.net/link?link_id=%s|%s>'
-        }
+            'LINK_CLASS': 'JiraLinkBot',
+            'HOST': 'https://jira.cac.washington.edu',
+            'AUTH': UW_SAML_CREDENTIALS,
+            'MATCH': '[A-Z]{3,}\-[0-9]+',
+            'LINK': '<https://jira.example.edu/browse/%s|%s>',
+        },
         {
-            'LINK_CLASS': 'JiraLinkBot'
-            'MATCH': 'NETID-[0-9]+',
-            'LINK': '<https://jira.example.edu/browse/%s|%s>'
+            'LINK_CLASS': 'ServiceNowBot',
+            'HOST': 'https://XXXX.service-now.com',
+            'AUTH': SERVICE_NOW_CREDENTIALS,
+            'MATCH': '(REQ|INC|ITASK|RTASK)[0-9]{7,}'
         }
     ]
 
