@@ -2,14 +2,13 @@
 import requests
 from bs4 import BeautifulSoup
 from six.moves.urllib.parse import urljoin
-from jira import JIRA
 IDP = 'https://idp.u.washington.edu/'
-CREDENTIALS = (None, None)  # (username, password) set from beyond
 
 
 class UwSamlSession(requests.Session):
     """A requests.Session that checks responses for IdP redirects."""
-    def __init__(self):
+    def __init__(self, credentials=(None, None)):
+        self._credentials = credentials
         super(UwSamlSession, self).__init__()
 
     def request(self, method, url, *args, **kwargs):
@@ -26,7 +25,7 @@ class UwSamlSession(requests.Session):
                 break
             url, form = self._form_data(response.content)
             if 'j_username' in form:
-                user, password = CREDENTIALS
+                user, password = self._credentials
                 form.update({
                     'j_username': user,
                     'j_password': password})
@@ -47,16 +46,3 @@ class UwSamlSession(requests.Session):
                 for element in form.find_all('input')
                 if element.get('name')}
         return url, data
-
-
-class UwSamlJira(JIRA):
-    """A Jira client with a saml session to handle authn on an SSO redirect"""
-    _session = UwSamlSession()
-
-    def __init__(self, credentials=()):
-        """Initialize with the basic auth so we use our _session."""
-        super(UwSamlJira, self).__init__('https://jira.cac.washington.edu',
-                                         basic_auth=('injected', 'ignored'))
-
-    def _create_http_basic_session(self, *basic_auth, timeout=None):
-        """Hide the JIRA implementation so it uses our instance of_session."""
