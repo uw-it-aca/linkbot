@@ -12,7 +12,7 @@ logger = getLogger(__name__)
 class ServiceNowClient(requests.Session):
     """ServiceNow REST client for looking up records."""
     api = '/api/now/table'
-    _table_map = {
+    table_map = {
         'REQ': 'u_simple_requests',
         'INC': 'incident',
         'RTASK': 'u_request_task',
@@ -67,7 +67,7 @@ class ServiceNowClient(requests.Session):
         table if there is one.
         """
         ticket_type = self._digits_regex.sub('', number)
-        table = self._table_map.get(ticket_type)
+        table = self.table_map.get(ticket_type)
         if not table:
             raise KeyError('unrecognized service now type ' + ticket_type)
         return table

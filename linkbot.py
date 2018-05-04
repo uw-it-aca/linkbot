@@ -25,6 +25,8 @@ import re
 import linkconfig
 from linkbot import clients
 import logging
+from logging.handlers import RotatingFileHandler
+import time
 logger = logging.getLogger(__name__)
 
 
@@ -47,10 +49,11 @@ class LinkBot(object):
         '%s?  An epic, yet approachable tale...',
         '%s?  Reminds me of a story...',
     ]
+    default_match = r'_THIS_COULD_BE_OVERRIDDEN_'
 
     def __init__(self, conf):
         self._conf = conf
-        match = conf.get('MATCH')
+        match = conf.get('MATCH', self.default_match)
         self._regex = re.compile(r'(\A|\W)+(%s)' % match, flags=re.I)
         self._quips = conf.get('QUIPS', self.QUIPS)
         self._link = conf.get('LINK', '%s|%s')
@@ -97,7 +100,11 @@ class JiraLinkBot(LinkBot):
     """Subclass LinkBot to customize response for JIRA links
 
     """
+    default_match = '[A-Z]{3,}\-[0-9]+'
+
     def __init__(self, conf):
+        if not 'LINK' in conf:
+            conf['LINK'] = '<{}/%s|%s>'.format(conf['HOST'])
         super(JiraLinkBot, self).__init__(conf)
         self.jira = clients.UwSamlJira(host=conf.get('HOST'),
                                        auth=conf.get('AUTH'))
@@ -116,6 +123,9 @@ class JiraLinkBot(LinkBot):
 
 
 class ServiceNowBot(LinkBot):
+    _ticket_regex = '|'.join(clients.ServiceNowClient.table_map)
+    default_match = '(%s)[0-9]{7,}' % _ticket_regex
+
     def __init__(self, conf):
         super(ServiceNowBot, self).__init__(conf)
         self.client = clients.ServiceNowClient(
@@ -140,15 +150,53 @@ class ServiceNowBot(LinkBot):
         return '<{link}|{label}>'.format(link=link, label=link_label)
 
 
+def configure_logging():
+    size = 1024 * 1024
+    handler = RotatingFileHandler('linkbot.log', maxBytes=size, backupCount=1)
+    format = ('%(asctime)s %(levelname)s %(module)s.%(funcName)s():%(lineno)d:'
+              ' %(message)s')
+    logging.basicConfig(level=logging.INFO, format=format, handlers=(handler,))
+
+
+class SlackReceiver:
+    """Slack websocket context that will try to reconnect on exception."""
+    def __init__(self, client):
+        self.client = client
+        self.websocket = None
+
+    def _connect(self):
+        response = self.client.rtm.start()
+        return create_connection(response.body['url'])
+
+    def __enter__(self):
+        logger.info('starting SlackReceiver')
+        self.websocket = self._connect()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        logger.info('closing SlackReceiver')
+        self.websocket.close()
+
+    def recv(self):
+        last_failure = 0
+        while time.time() - last_failure > 60:
+            try:
+                yield self.websocket.recv()
+            except Exception as e:
+                logger.info('attempting reconnection of SlackReceiver, '
+                            + str(e))
+                last_failure = time.time()
+                self.websocket.close()
+                self.websocket = self._connect()
+        logger.critical('websocket failed twice in a minute')
+
+
 def linkbot():
     """Establish Slack connection and filter messages
     
     """
     slack = Slacker(getattr(linkconfig, 'API_TOKEN'))
     robo_id = slack.auth.test().body.get('user_id')
-    response = slack.rtm.start()
-    websocket = create_connection(response.body['url'])
-
     link_bots = []
     for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
         bot_class = globals()[bot_conf.get('LINK_CLASS', 'LinkBot')]
@@ -157,9 +205,8 @@ def linkbot():
     if not len(link_bots):
         raise Exception('No linkbots defined')
 
-    try:
-        while True:
-            rcv = websocket.recv()
+    with SlackReceiver(slack) as slack_receiver:
+        for rcv in slack_receiver.recv():
             j = json.loads(rcv)
 
             if j.get('type') == 'message':
@@ -168,7 +215,7 @@ def linkbot():
 
                 for bot in link_bots:
                     for match in bot.match(j.get('text', '')):
-                        logger.info(j.get('text', '') + " match!")
+                        logger.info(match + " match!")
                         try:
                             message = bot.message(match)
                         except Exception as e:
@@ -179,12 +226,12 @@ def linkbot():
                                 message,
                                 as_user=robo_id,
                                 parse='none')
-    except Exception as e:
-        logger.fatal(e)
-    finally:
-        logger.info('closing websocket')
-        websocket.close()
 
 
 if __name__ == '__main__':
-    linkbot()
+    configure_logging()
+    try:
+        linkbot()
+    except Exception as e:
+        logger.exception(e)
+        logger.critical(e)
