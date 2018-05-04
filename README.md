@@ -12,16 +12,13 @@ the following module variables:
     LINKBOTS = [
         {
             'LINK_CLASS': 'JiraLinkBot',
-            'HOST': 'https://jira.cac.washington.edu',
-            'AUTH': UW_SAML_CREDENTIALS,
-            'MATCH': '[A-Z]{3,}\-[0-9]+',
-            'LINK': '<https://jira.example.edu/browse/%s|%s>',
+            'HOST': 'https://jira.example.com',
+            'AUTH': UW_SAML_CREDENTIALS
         },
         {
             'LINK_CLASS': 'ServiceNowBot',
             'HOST': 'https://XXXX.service-now.com',
-            'AUTH': SERVICE_NOW_CREDENTIALS,
-            'MATCH': '(REQ|INC|ITASK|RTASK)[0-9]{7,}'
+            'AUTH': SERVICE_NOW_CREDENTIALS
         }
     ]
 
