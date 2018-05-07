@@ -179,16 +179,17 @@ class SlackReceiver:
 
     def recv(self):
         last_failure = 0
-        while time.time() - last_failure > 60:
+        while True:
             try:
                 yield self.websocket.recv()
             except Exception as e:
-                logger.info('attempting reconnection of SlackReceiver, '
-                            + str(e))
+                if last_failure and time.time() - last_failure < 60:
+                    logger.critical('websocket failed twice in a minute')
+                    raise
+                logger.info('reconnecting SlackReceiver, ' + str(e))
                 last_failure = time.time()
                 self.websocket.close()
                 self.websocket = self._connect()
-        logger.critical('websocket failed twice in a minute')
 
 
 def linkbot():
