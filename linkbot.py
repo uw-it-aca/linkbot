@@ -104,7 +104,7 @@ class JiraLinkBot(LinkBot):
 
     def __init__(self, conf):
         if not 'LINK' in conf:
-            conf['LINK'] = '<{}/%s|%s>'.format(conf['HOST'])
+            conf['LINK'] = '<{}/browse/%s|%s>'.format(conf['HOST'])
         super(JiraLinkBot, self).__init__(conf)
         self.jira = clients.UwSamlJira(host=conf.get('HOST'),
                                        auth=conf.get('AUTH'))
