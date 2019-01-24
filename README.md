@@ -7,10 +7,18 @@ the following module variables:
 ### Example `linkconfig.py`
 
     API_TOKEN='_API_Token_generated_from_your_Slack_instance_'
+    UW_SAML_CREDENTIALS = ('_low-privilege-username_', '_password_')
+    SERVICE_NOW_CREDENTIALS = ('_api-account_', '_api-key_')
     LINKBOTS = [
         {
-            'MATCH': 'req[0-9]+',
-            'LINK': '<http://www.example.net/link?link_id=%s|%s>'
+            'LINK_CLASS': 'JiraLinkBot',
+            'HOST': 'https://jira.example.com',
+            'AUTH': UW_SAML_CREDENTIALS
+        },
+        {
+            'LINK_CLASS': 'ServiceNowBot',
+            'HOST': 'https://XXXX.service-now.com',
+            'AUTH': SERVICE_NOW_CREDENTIALS
         }
     ]
 
