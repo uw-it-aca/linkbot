@@ -1,0 +1,9 @@
+# ignore .git 
+.git
+.cache
+
+# no need for readme
+README.md
+
+# no local/debug log file
+linkbot.log

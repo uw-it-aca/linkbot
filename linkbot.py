@@ -22,11 +22,14 @@ from websocket import create_connection
 from random import choice
 import simplejson as json
 import re
+import sys
 import linkconfig
 from linkbot import clients
 import logging
 from logging.handlers import RotatingFileHandler
 import time
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -93,7 +96,7 @@ class LinkBot(object):
             '>': '&gt;',
         }
 
-        return "".join(escaped.get(c,c) for c in text)
+        return "".join(escaped.get(c, c) for c in text)
 
 
 class JiraLinkBot(LinkBot):
@@ -103,7 +106,7 @@ class JiraLinkBot(LinkBot):
     default_match = '[A-Z]{3,}\-[0-9]+'
 
     def __init__(self, conf):
-        if not 'LINK' in conf:
+        if 'LINK' not in conf:
             conf['LINK'] = '<{}/browse/%s|%s>'.format(conf['HOST'])
         super(JiraLinkBot, self).__init__(conf)
         self.jira = clients.UwSamlJira(host=conf.get('HOST'),
@@ -151,10 +154,18 @@ class ServiceNowBot(LinkBot):
 
 
 def configure_logging():
-    size = 1024 * 1024
-    handler = RotatingFileHandler('linkbot.log', maxBytes=size, backupCount=1)
-    format = ('%(asctime)s %(levelname)s %(module)s.%(funcName)s():%(lineno)d:'
+    format = ('%(asctime)s %(levelname)s %(module)s.'
+              '%(funcName)s():%(lineno)d:'
               ' %(message)s')
+
+    logfile = getattr(linkconfig, 'LOG_FILE', 'linkbot.log')
+    if logfile == 'stdout':
+        handler = logging.StreamHandler(sys.stdout)
+    else:
+        size = 1024 * 1024
+        handler = RotatingFileHandler(
+            logfile, maxBytes=size, backupCount=1)
+
     logging.basicConfig(level=logging.INFO, format=format, handlers=(handler,))
 
 
