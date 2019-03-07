@@ -158,8 +158,8 @@ def configure_logging():
               '%(funcName)s():%(lineno)d:'
               ' %(message)s')
 
-    logfile = getattr(linkconfig, 'LOG_FILE', 'linkbot.log')
-    if logfile == 'stdout':
+    logfile = getattr(linkconfig, 'LOG_FILE')
+    if not logfile or logfile == 'stdout':
         handler = logging.StreamHandler(sys.stdout)
     else:
         size = 1024 * 1024
