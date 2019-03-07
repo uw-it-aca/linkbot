@@ -5,5 +5,5 @@ ENV PYTHONUNBUFFERED 1
 ADD . /app
 WORKDIR /app
 RUN pip install -r requirements.txt
-RUN cp linkconf_example.py linkconf.py
+RUN cp linkconfig_example.py linkconfig.py
 CMD ["python", "linkbot.py"]
