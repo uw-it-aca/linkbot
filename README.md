@@ -1,7 +1,7 @@
 # linkbot
 Slackbot to bind message fragments to external links
 
-Linkbot can run anwhere. To get it running, just create it's configuration module, `linkconfig.py`, and supply
+Linkbot can run anyhere. To get it running, just create its configuration module, `linkconfig.py`, and supply
 the following module variables:
 
 ### Example `linkconfig.py`

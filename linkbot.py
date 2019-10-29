@@ -20,6 +20,7 @@ Run linkbot
 from slacker import Slacker
 from websocket import create_connection
 from random import choice
+from datetime import datetime
 import simplejson as json
 import re
 import sys
@@ -112,16 +113,29 @@ class JiraLinkBot(LinkBot):
         self.jira = clients.UwSamlJira(host=conf.get('HOST'),
                                        auth=conf.get('AUTH'))
 
+    @staticmethod
+    def pretty_update_time(issue):
+        updated = issue.fields.updated
+        try:
+            update_dt = datetime.strptime(updated, '%Y-%m-%dT%H:%M:%S.%f%z')
+            updated = update_dt.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception:
+            pass
+        return updated
+
+    def _get_name(person):
+        return person and person.displayName or 'None'
+
     def message(self, link_label):
         msg = super(JiraLinkBot, self).message(link_label)
         issue = self.jira.issue(link_label)
         summary = issue.fields.summary
-        get_name = lambda person: person and person.displayName or 'None'
-        reporter = '*Reporter* ' + get_name(issue.fields.reporter)
-        assignee = '*Assignee* ' + get_name(issue.fields.assignee)
+        reporter = '*Reporter* ' + self._get_name(issue.fields.reporter)
+        assignee = '*Assignee* ' + self._get_name(issue.fields.assignee)
+        updated = '*Last Update* ' + self.pretty_update_time(issue)
         status = '*Status* ' + issue.fields.status.name
         lines = list(map(self._escape_html,
-                         [summary, reporter, assignee, status]))
+                         [summary, reporter, assignee, status, updated]))
         return '\n> '.join([msg] + lines)
 
 

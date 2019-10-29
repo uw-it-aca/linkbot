@@ -3,7 +3,6 @@ from setuptools import setup
 install_requires = ['beautifulsoup4',
                     'simplejson',
                     'slacker',
-                    'jira',
                     'requests',
                     'websocket-client']
 

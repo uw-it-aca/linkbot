@@ -3,8 +3,8 @@ import re
 import collections
 from logging import getLogger
 from functools import partial
-from six.moves.urllib.parse import urlencode
-from jira import JIRA
+from six.moves.urllib.parse import urlencode, quote
+from types import SimpleNamespace
 from . import saml
 logger = getLogger(__name__)
 
@@ -13,10 +13,14 @@ class ServiceNowClient(requests.Session):
     """ServiceNow REST client for looking up records."""
     api = '/api/now/table'
     table_map = {
-        'REQ': 'u_simple_requests',
+        'CHG': 'change_request',
+        'CTASK': 'change_task',
         'INC': 'incident',
+        'ITASK': 'u_incident_task',
+        'PRB': 'problem',
+        'PTASK': 'problem_task',
+        'REQ': 'u_simple_requests',
         'RTASK': 'u_request_task',
-        'ITASK': 'u_incident_task'
     }
     _digits_regex = re.compile('[0-9]')
 
@@ -108,12 +112,31 @@ class ServiceNowRecord:
             yield field, value
 
 
-class UwSamlJira(JIRA):
+class UwSamlJira:
     """A Jira client with a saml session to handle authn on an SSO redirect"""
     def __init__(self, host='', auth=(None, None)):
         """Initialize with the basic auth so we use our _session."""
         self._session = saml.UwSamlSession(credentials=auth)
-        super(UwSamlJira, self).__init__(host, basic_auth=('ignored', 'haha'))
+        self.host = host
 
-    def _create_http_basic_session(self, *basic_auth, timeout=None):
-        """Hide the JIRA implementation so it uses our instance of_session."""
+    def issue(self, issue_number):
+        """
+        Return a JIRA issue. Try to adhere to the same model as the
+        jira package.
+        """
+        url = "{}/rest/api/latest/issue/{}".format(
+            self.host, quote(issue_number))
+        response = self._session.get(url)
+        if response.status_code == 404:
+            raise KeyError("{} not found".format(issue_number))
+
+        response.raise_for_status()
+        data = response.json()
+
+        fields = SimpleNamespace(**data['fields'])
+        subobjects = ['status', 'reporter', 'assignee']
+        for subobject in subobjects:
+            objdict = getattr(fields, subobject, None)
+            if objdict:
+                setattr(fields, subobject, SimpleNamespace(**objdict))
+        return SimpleNamespace(fields=fields)
