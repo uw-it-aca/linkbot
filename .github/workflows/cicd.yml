@@ -95,7 +95,7 @@ jobs:
         run: echo "::set-output name=context::$(< ${CONTEXT_FILENAME})"
 
   housekeeping:
-    if: false and github.event_name == 'push'
+    if: false && github.event_name == 'push'
 
     needs: [context, build, deploy]
 
