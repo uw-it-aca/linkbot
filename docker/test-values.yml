@@ -1,9 +1,9 @@
 resources:
   limits:
-    cpu: .5m
+    cpu: 500m
     memory: 256Mi
   requests:
-    cpu: 128m
+    cpu: 25m
     memory: 128Mi
 
 repo: linkbot
