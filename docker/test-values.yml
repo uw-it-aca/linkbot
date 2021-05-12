@@ -102,7 +102,7 @@ environmentVariablesSecrets:
     name: SERVICE_NOW_HOST
     secretName: linkbot-secrets
     secretKey: service-now-host
-  service-now-credentials:
+  service-now-api-credentials:
     name: SERVICE_NOW_CREDENTIALS
     secretName: linkbot-secrets
-    secretKey: service-now-credentials
+    secretKey: service-now-api-credentials
