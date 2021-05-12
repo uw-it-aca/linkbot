@@ -97,7 +97,7 @@ environmentVariablesSecrets:
   uw-saml-credentials:
     name: UW_SAML_CREDENTIALS
     secretName: linkbot-secrets
-    secretKey: uw-saml-credentials
+    secretKey: jira-api-credentials
   service-now-host:
     name: SERVICE_NOW_HOST
     secretName: linkbot-secrets
