@@ -19,11 +19,13 @@ Run linkbot
 """
 from slacker import Slacker
 from websocket import create_connection
+from prometheus_client import start_http_server, Counter
 from random import choice
 from datetime import datetime
 import simplejson as json
 import re
 import sys
+import os
 import linkconfig
 from linkbot import clients
 import logging
@@ -231,6 +233,12 @@ def linkbot():
     if not len(link_bots):
         raise Exception('No linkbots defined')
 
+    # prepare metrics
+    linkbot_message_count = Counter(
+        'message_sent_count',
+        'LinkBot message match and sent count',
+        ['channel'])
+
     with SlackReceiver(slack) as slack_receiver:
         for rcv in slack_receiver.recv():
             j = json.loads(rcv)
@@ -252,11 +260,16 @@ def linkbot():
                                 message,
                                 as_user=robo_id,
                                 parse='none')
+                        linkbot_message_count.labels(j.get('channel')).inc()
 
 
 if __name__ == '__main__':
     configure_logging()
+
     try:
+        # open metrics exporter endpoint
+        start_http_server(os.getenv('PORT', 9100))
+
         linkbot()
     except Exception as e:
         logger.exception(e)

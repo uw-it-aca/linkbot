@@ -6,9 +6,9 @@ env:
 
 on:
   push:
-    branches: [master, feature/github-actions]
+    branches: [main, develop]
   pull_request:
-    branches: [master]
+    branches: [main, develop]
     types: [opened, reopened, synchronize]
 
 jobs:
@@ -64,7 +64,7 @@ jobs:
           gcp_json_key: ${{ secrets.GCP_JSON_KEY }}
 
   deploy:
-    if: false && github.event_name == 'push'
+    if: github.event_name == 'push'
 
     needs: [context, build]
 
@@ -78,15 +78,14 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Deployment Pipeline
-        if: >-
-          contains(fromJSON('["main", "master", "develop", "qa"]'),
-            needs.context.outputs.git_repo_branch)
+        if: needs.context.outputs.git_repo_branch == 'develop'
         uses: uw-it-aca/actions/cicd-deploy@main
         with:
           release_name: ${{ env.RELEASE_NAME }}
           gh_auth_token: ${{ secrets.GH_AUTH_TOKEN }}
           commit_hash: ${{ needs.context.outputs.commit_hash }}
           git_repo_branch: ${{ needs.context.outputs.git_repo_branch }}
+          helm_chart_branch: feature/daemon-only
 
       - name: 'Surface context from executed build step'
         id: context

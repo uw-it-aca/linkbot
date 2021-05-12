@@ -15,7 +15,8 @@ setup(
         'simplejson',
         'slacker',
         'requests',
-        'websocket-client'],
+        'websocket-client',
+        'django-prometheus'],
     license='Apache License, Version 2.0',
     description='slackbot listening for mentions of jira issues, etc',
     classifiers=[
