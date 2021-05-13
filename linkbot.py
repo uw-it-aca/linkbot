@@ -268,7 +268,7 @@ if __name__ == '__main__':
 
     try:
         # open metrics exporter endpoint
-        start_http_server(os.getenv('PORT', 9100))
+        start_http_server(int(os.getenv('PORT', 9100)))
 
         linkbot()
     except Exception as e:
