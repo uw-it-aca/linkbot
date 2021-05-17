@@ -89,6 +89,7 @@ def log_request(logger, body, next):
 
 @slack_app.event("message")
 def linkbot_response(body, say, logger):
+    logger.info("message event: {}".format(body))
     for bot in link_bots:
         for match in bot.match(body.get('text', '')):
             logger.info(match + " match!")
