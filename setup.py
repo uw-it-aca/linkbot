@@ -11,11 +11,9 @@ setup(
     author="UW-IT AXDD",
     author_email="aca-it@uw.edu",
     install_requires=[
-        'beautifulsoup4',
         'simplejson',
-        'slacker',
+        'slack_bolt',
         'requests',
-        'websocket-client',
         'django-prometheus'],
     license='Apache License, Version 2.0',
     description='slackbot listening for mentions of jira issues, etc',

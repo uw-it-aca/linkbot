@@ -85,7 +85,16 @@ jobs:
           gh_auth_token: ${{ secrets.GH_AUTH_TOKEN }}
           commit_hash: ${{ needs.context.outputs.commit_hash }}
           git_repo_branch: ${{ needs.context.outputs.git_repo_branch }}
-          helm_chart_branch: feature/daemon-only
+
+      - name: Deployment Pipeline
+        if: needs.context.outputs.git_repo_branch == 'feature/bolt-refactor'
+        uses: uw-it-aca/actions/cicd-deploy@main
+        with:
+          release_name: ${{ env.RELEASE_NAME }}
+          gh_auth_token: ${{ secrets.GH_AUTH_TOKEN }}
+          commit_hash: ${{ needs.context.outputs.commit_hash }}
+          git_repo_branch: ${{ needs.context.outputs.git_repo_branch }}
+          app_instance: dev
 
       - name: 'Surface context from executed build step'
         id: context
@@ -93,7 +102,7 @@ jobs:
         run: echo "::set-output name=context::$(< ${CONTEXT_FILENAME})"
 
   housekeeping:
-    if: false && github.event_name == 'push'
+    if: github.event_name == 'push'
 
     needs: [context, build, deploy]
 
@@ -107,3 +116,4 @@ jobs:
           gh_auth_token: ${{ secrets.GH_AUTH_TOKEN }}
           registry_password: ${{ secrets.GCP_JSON_KEY }}
           context: ${{ needs.deploy.outputs.context }}
+          prune_flux_preserve_count: 2
