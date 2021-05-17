@@ -1,6 +1,6 @@
 from linkbots import LinkBot as LinkBotBase
 from datetime import datetime
-from six.moves.urllib.parse import quote
+from urllib.parse import quote
 from types import SimpleNamespace
 from . import saml
 

@@ -1,5 +1,5 @@
 from linkbots import LinkBot as LinkBotBase
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 from functools import partial
 import requests
 import collections
