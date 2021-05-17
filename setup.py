@@ -11,6 +11,7 @@ setup(
     author="UW-IT AXDD",
     author_email="aca-it@uw.edu",
     install_requires=[
+        'beautifulsoup4',
         'simplejson',
         'slack_bolt',
         'requests',

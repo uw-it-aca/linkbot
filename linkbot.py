@@ -56,6 +56,7 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
         except KeyError:
             module_name = "linkbots"
 
+        print("loading {}".format(module_name))
         logger.info("loading {}".format(module_name))
 
         module = import_module(module_name)
