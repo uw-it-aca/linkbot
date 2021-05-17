@@ -6,7 +6,7 @@ env:
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, feature/bolt-refactor]
   pull_request:
     branches: [main, develop]
     types: [opened, reopened, synchronize]
