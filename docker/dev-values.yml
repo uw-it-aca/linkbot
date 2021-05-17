@@ -34,8 +34,13 @@ resources:
 
 service:
   enabled: true
-  type: ClusterIP
-  port: 3000
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http
+    - port: 9100
+      targetPort: 9100
+      name: metrics
 
 deploymentInitialization:
   enabled: false
@@ -69,7 +74,7 @@ metrics:
   enabled: true
   serviceMonitor:
     enabled: true
-    port: http
+    port: metrics
 
 readiness:
   enabled: false
