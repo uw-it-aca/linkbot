@@ -7,13 +7,13 @@ ingress:
   enabled: true
   type: nginx
   tls:
-    test-prt:
+    dev-linkbot:
       secretName: linkbot.axdd.s.uw.edu-ingress-cert
       hosts:
         - linkbot.axdd.s.uw.edu
   hosts:
-    test-prt:
-      host: test.provision.uw.edu
+    dev-linkbot:
+      host: linkbot.axdd.s.uw.edu
       paths:
         - "/"
   annotations:
