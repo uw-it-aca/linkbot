@@ -74,8 +74,17 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
 @slack_app.command("/linkbot")
 def linkbot_command(ack, say, command):
     ack()
-    op = command.get('text', '').split[0]
-    say("operation is {}".format(op))
+    parts = command.get('text', '').split()
+    op = parts[0]
+    argv = parts[1:]
+    if op == 'help' or op == '?':
+        say("linkbot can:\n   debug [on|off]")
+    elif op == 'debug':
+        sense = argv[0].lower == 'on'
+        logging.basicConfig(level=logging.DEBUG if (
+            sense) else logging.INFO)
+    else:
+        say("sorry, linkbot cannot: {}".format(op))
 
 
 # prepare event endpoint
