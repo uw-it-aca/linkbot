@@ -49,7 +49,9 @@ slack_app = App(
     ssl_check_enabled=False,
     request_verification_enabled=False)
 
+
 # import, initialize and register message event handlers for linkbots
+bot_list = []
 for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
     try:
         try:
@@ -59,6 +61,7 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
 
         module = import_module(module_name)
         bot = getattr(module, 'LinkBot')(bot_conf)
+        bot_list.append(bot)
 
         logger.info("loading {}: {}".format(bot.name(), bot.match_pattern()))
 
@@ -70,21 +73,42 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
             "Cannot load module {}: {}".format(module_name, ex))
 
 
-# prepare for any bot commands
+# linkbot commands
 @slack_app.command("/linkbot")
 def linkbot_command(ack, say, command):
     ack()
     parts = command.get('text', '').split()
-    op = parts[0]
+    op = parts[0].lower()
     argv = parts[1:]
-    if op == 'help' or op == '?':
-        say("linkbot can:\n   debug [on|off]")
+    if op in ['help', '?', '']:
+        say("linkbot can:\n{}".format('   \n'.join[
+            "debug [on|off]",
+            "quips [on|off|reset]",
+            "links"]))
     elif op == 'debug':
-        sense = argv[0].lower == 'on'
-        logging.basicConfig(level=logging.DEBUG if (
-            sense) else logging.INFO)
+        sense = argv[0].lower() in ['on', '1', 'true']
+        logging.getLogger().setLevel(logging.DEBUG if sense else logging.INFO)
+        say("linkbot debug logging {}".format('on' if sense else 'off'))
+    elif op == 'quips':
+        arg = argv[0].lower()
+        if arg == 'reset':
+            for bot_conf in bot_list:
+                bot.quip_reset()
+
+            say("linkbot quips have been reset")
+        else:
+            sense = arg in ['on', '1', 'true']
+            for bot_conf in bot_list:
+                bot.quip(sense)
+
+            say("linkbot turned {} quips".format('on' if sense else 'off'))
+    elif op == 'links':
+        for bot_conf in bot_list:
+            say("linkbot searches for:\n".format("    \n".join(
+                ["{}: {}".format(
+                    bot.name(), bot.match_pattern() for bot in bot_list)])))
     else:
-        say("sorry, linkbot cannot: {}".format(op))
+        say("sorry, linkbot cannot *{}*".format(op))
 
 
 # prepare event endpoint

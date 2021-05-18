@@ -31,6 +31,7 @@ class LinkBot(object):
         self._quips = conf.get('QUIPS', self.QUIPS)
         self._link = conf.get('LINK', '{}|{}')
         self._quiplist = []
+        self._do_quip = True
 
     def name(self):
         return "linkbot ({})".format(self.match_pattern())
@@ -56,16 +57,29 @@ class LinkBot(object):
             except Exception as ex:
                 logger.error("send_message: {}".format(ex))
 
-    def _quip(self, link):
-        try:
-            if len(self._quiplist) < 1:
-                self._quiplist = self._quips.copy()
+    @property
+    def quip(self):
+        return self._do_quip
 
-            quip = choice(self._quiplist)
-            self._quiplist.remove(quip)
-            return quip.format(link)
-        except IndexError:
-            pass
+    @quip.setter
+    def quip(self, state):
+        if state in [True, False]:
+            self._do_quip = state
+
+    def quip_reset(self):
+        self._quiplist = self._quips.copy()
+
+    def _quip(self, link):
+        if self._do_quip:
+            try:
+                if len(self._quiplist) < 1:
+                    self.quip_reset()
+    
+                quip = choice(self._quiplist)
+                self._quiplist.remove(quip)
+                return quip.format(link)
+            except IndexError:
+                pass
 
         return link
 
