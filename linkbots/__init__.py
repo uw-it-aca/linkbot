@@ -1,4 +1,5 @@
 from random import choice
+from metrics import metrics_counter
 import re
 
 
@@ -50,6 +51,7 @@ class LinkBot(object):
     def send_message(self, message, say):
         for match in self.match(message.get('text', '')):
             say(self.message(match), parse='none')
+            metrics_counter(message.get('channel'))
 
     def _quip(self, link):
         try:

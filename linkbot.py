@@ -26,8 +26,8 @@ from slack_bolt import App
 from slack_bolt.adapter.tornado import SlackEventsHandler
 from tornado.web import Application
 from tornado.ioloop import IOLoop
-from prometheus_client import start_http_server, Counter
 from importlib import import_module
+from metrics import metrics_server
 import linkconfig
 import sys
 import os
@@ -49,7 +49,7 @@ slack_app = App(
     ssl_check_enabled=False,
     request_verification_enabled=False)
 
-# import and initialize linkbots
+# import, initialize and register message event handlers for linkbots
 for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
     try:
         try:
@@ -64,17 +64,9 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
 
         slack_app.message(bot.match_regex())(bot.send_message)
 
-        # linkbot_message_count.labels(message.get('channel')).inc()
-
     except Exception as ex:
         raise Exception(
             "Cannot load module {}: {}".format(module_name, ex))
-
-# prepare metrics
-linkbot_message_count = Counter(
-    'message_sent_count',
-    'LinkBot message match and sent count',
-    ['channel'])
 
 # prepare event endpoint
 tornado_api = Application(
@@ -83,7 +75,7 @@ tornado_api = Application(
 if __name__ == '__main__':
     try:
         # open metrics exporter endpoint
-        start_http_server(int(os.environ.get('METRICS_PORT', 9100)))
+        metrics_server(int(os.environ.get('METRICS_PORT', 9100)))
 
         # open linkbot endpoint
         tornado_api.listen(int(os.environ.get("PORT", 3000)))
