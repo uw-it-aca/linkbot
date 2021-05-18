@@ -26,7 +26,7 @@ class LinkBot(object):
     def __init__(self, conf):
         self._conf = conf
         match = conf.get('MATCH', self.default_match)
-        self._regex = re.compile(r'(\A|\W)+({})'.format(match, flags=re.I))
+        self._regex = re.compile(r'(\A|\W)+({})'.format(match), flags=re.I)
         self._quips = conf.get('QUIPS', self.QUIPS)
         self._link = conf.get('LINK', '{}|{}')
         self._quiplist = []
