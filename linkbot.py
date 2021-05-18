@@ -50,7 +50,6 @@ slack_app = App(
     request_verification_enabled=False)
 
 # import and initialize linkbots
-link_bots = []
 for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
     try:
         try:
@@ -64,19 +63,17 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
         logger.info("loading {}: {}".format(bot.name(), bot.match_pattern()))
 
         @slack_app.message(bot.match_regex())
-        def linkbot_message(context, say, logger, next):
-            logger.debug('message {}: context: {}'.format(bot.name(), context))
-            linkbot_response(say, bot.message(context['matches'][1]),
-                             context['event'].get('channel'))
+        def linkbot_message(message, say, logger, next):
+            logger.debug('bot {}: message: {}'.format(bot.name(), message))
+            for match in bot.match(message.get('text', '')):
+                say(bot.message(match), parse='none')
+                linkbot_message_count.labels(message.get('channel')).inc()
+
             return next()
 
-        link_bots.append(bot)
     except Exception as ex:
         raise Exception(
             "Cannot load module {}: {}".format(module_name, ex))
-
-if len(link_bots) < 1:
-    raise Exception('No linkbots defined')
 
 
 #@slack_app.middleware
@@ -93,15 +90,6 @@ if len(link_bots) < 1:
 #            bot.name(), bot.match_pattern(), text))
 #        for match in bot.match(text):
 #            linkbot_response(say, bot.message(match), event.get('channel'))
-
-
-def linkbot_response(say, message, channel):
-    try:
-        logger.debug("response: {}".format(message))
-        say(message, parse='none')
-        linkbot_message_count.labels(channel).inc()
-    except Exception as e:
-        logger.error(e)
 
 
 # prepare metrics
