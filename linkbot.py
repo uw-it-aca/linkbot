@@ -24,31 +24,20 @@ from tornado.web import Application
 from tornado.ioloop import IOLoop
 from prometheus_client import start_http_server, Counter
 from importlib import import_module
+import linkconfig
 import sys
 import os
-import linkconfig
 import logging
-from logging.handlers import RotatingFileHandler
 
+
+# setup basic logging
+logging.basicConfig(level=logging.DEBUG,
+                    format=('%(asctime)s %(levelname)s %(module)s.'
+                            '%(funcName)s():%(lineno)d:'
+                            ' %(message)s'),
+                    handlers=(logging.StreamHandler(sys.stdout),))
 
 logger = logging.getLogger(__name__)
-
-
-def configure_logging():
-    format = ('%(asctime)s %(levelname)s %(module)s.'
-              '%(funcName)s():%(lineno)d:'
-              ' %(message)s')
-
-    logfile = getattr(linkconfig, 'LOG_FILE')
-    if not logfile or logfile == 'stdout':
-        handler = logging.StreamHandler(sys.stdout)
-    else:
-        size = 1024 * 1024
-        handler = RotatingFileHandler(
-            logfile, maxBytes=size, backupCount=1)
-
-    logging.basicConfig(level=logging.DEBUG,
-                        format=format, handlers=(handler,))
 
 
 # import and initialize linkbot responders
