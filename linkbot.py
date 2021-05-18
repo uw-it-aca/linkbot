@@ -73,10 +73,11 @@ if not len(link_bots):
     raise Exception('No linkbots defined')
 
 # initialize slack
-slack_app = App()
+slack_app = App(
+    logger=logger
 #    token=os.environ.get("SLACK_BOT_TOKEN"),
 #    signing_secret=os.environ.get("SLACK_SIGNING_SECRET")
-#)
+)
 
 # prepare metrics
 linkbot_message_count = Counter(
@@ -92,10 +93,10 @@ def log_request(logger, body, next):
 
 
 @slack_app.event("message")
-def linkbot_response(body, say, logger):
-    logger.debug("message event: {}".format(body))
+def linkbot_response(event, say, logger):
+    logger.debug("message event: {}".format(event))
     for bot in link_bots:
-        for match in bot.match(body.get('text', '')):
+        for match in bot.match(event.get('text', '')):
             logger.info(match + " match!")
             try:
                 message = bot.message(match)
@@ -104,7 +105,7 @@ def linkbot_response(body, say, logger):
                 continue
 
             say(message, parse='none')
-            linkbot_message_count.labels(body.get('channel')).inc()
+            linkbot_message_count.labels(event.get('channel')).inc()
 
 
 api = Application([("/slack/events", SlackEventsHandler, dict(app=slack_app))])
