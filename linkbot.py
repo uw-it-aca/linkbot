@@ -44,7 +44,8 @@ def configure_logging():
         handler = RotatingFileHandler(
             logfile, maxBytes=size, backupCount=1)
 
-    logging.basicConfig(level=logging.INFO, format=format, handlers=(handler,))
+    logging.basicConfig(level=logging.DEBUG,
+                        format=format, handlers=(handler,))
 
 
 # import and initialize linkbot responders
@@ -89,7 +90,7 @@ def log_request(logger, body, next):
 
 @slack_app.event("message")
 def linkbot_response(body, say, logger):
-    logger.info("message event: {}".format(body))
+    logger.debug("message event: {}".format(body))
     for bot in link_bots:
         for match in bot.match(body.get('text', '')):
             logger.info(match + " match!")
