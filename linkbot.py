@@ -63,13 +63,11 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
         logger.info("loading {}: {}".format(bot.name(), bot.match_pattern()))
 
         @slack_app.message(bot.match_regex())
-        def linkbot_message(message, say, logger, next):
+        def linkbot_message(message, say, logger):
             logger.debug('bot {}: message: {}'.format(bot.name(), message))
             for match in bot.match(message.get('text', '')):
                 say(bot.message(match), parse='none')
                 linkbot_message_count.labels(message.get('channel')).inc()
-
-            return next()
 
     except Exception as ex:
         raise Exception(
