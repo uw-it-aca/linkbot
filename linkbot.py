@@ -61,8 +61,8 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
         bot = getattr(module, 'LinkBot')(bot_conf)
 
         @slack_app.message(bot.match_regex())
-        def f(context, say, logger):
-            logger.debug('message context: {}'.format(context))
+        def linkbot_message(context, say, logger):
+            logger.debug('match {}: context: {}'.format(bot.name(), context))
 
         link_bots.append(bot)
     except Exception as ex:
@@ -80,21 +80,19 @@ def log_request(logger, body, next):
 
 
 @slack_app.event("message")
-def linkbot_response(event, say, logger):
+def linkbot_event(event, say, logger):
     logger.debug("linbot_response: {}".format(event))
     for bot in link_bots:
         text = event.get('text', '')
         logger.debug("linkbot {}: match {}".format(bot.name(), text))
         for match in bot.match(text):
-            logger.debug("match: {}".format(match))
             try:
                 message = bot.message(match)
+                logger.debug("match: {}".format(message))
+                say(message, parse='none')
+                linkbot_message_count.labels(event.get('channel')).inc()
             except Exception as e:
                 logger.error(e)
-                continue
-
-            say(message, parse='none')
-            linkbot_message_count.labels(event.get('channel')).inc()
 
 
 # prepare metrics
