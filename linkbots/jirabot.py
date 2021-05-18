@@ -61,7 +61,7 @@ class LinkBot(LinkBotBase):
             pass
         return updated
 
-    def _get_name(person):
+    def _get_name(self, person):
         return person and person.displayName or 'None'
 
     def message(self, link_label):
