@@ -47,6 +47,10 @@ class LinkBot(object):
     def message(self, link_label):
         return self._message_text(self._link.format(link_label, link_label))
 
+    def send_message(self, message, say):
+        for match in self.match(message.get('text', '')):
+            say(self.message(match), parse='none')
+
     def _quip(self, link):
         try:
             if len(self._quiplist) < 1:
