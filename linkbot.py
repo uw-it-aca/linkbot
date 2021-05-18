@@ -89,16 +89,18 @@ linkbot_message_count = Counter(
 
 @slack_app.middleware
 def log_request(logger, body, next):
-    logger.debug(body)
+    print("called log request")
+    logger.debug("middleware log_request: {}".format(body))
     return next()
 
 
 @slack_app.event("message")
 def linkbot_response(event, say, logger):
+    print("called linbot_response")
     logger.debug("message event: {}".format(event))
     for bot in link_bots:
         for match in bot.match(event.get('text', '')):
-            logger.info(match + " match!")
+            logger.info("match: {}".format(match))
             try:
                 message = bot.message(match)
             except Exception as e:
