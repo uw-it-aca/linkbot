@@ -110,7 +110,7 @@ class ServiceNowRecord:
 
 class LinkBot(LinkBotBase):
     _ticket_regex = '|'.join(ServiceNowClient.table_map)
-    default_match = '({})[0-9]]{{7,}}'.format(_ticket_regex)
+    default_match = '({})[0-9]{{7,}}'.format(_ticket_regex)
 
     def __init__(self, conf):
         super(LinkBot, self).__init__(conf)
