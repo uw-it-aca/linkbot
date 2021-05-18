@@ -11,7 +11,7 @@ setup(
     author="UW-IT AXDD",
     author_email="aca-it@uw.edu",
     install_requires=[
-        'tornado~=6',
+        'tornado>=6,<7',
         'beautifulsoup4',
         'simplejson',
         'slack_bolt',
