@@ -39,6 +39,13 @@ logging.basicConfig(level=logging.DEBUG,
 
 logger = logging.getLogger(__name__)
 
+# initialize slack
+slack_app = App(
+    logger=logger,
+    ssl_check_enabled=False,
+    request_verification_enabled=False)
+    #token=os.environ.get("SLACK_BOT_TOKEN")
+    #signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
 
 # import and initialize linkbot responders
 link_bots = []
@@ -49,31 +56,21 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
         except KeyError:
             module_name = "linkbots"
 
-        print("loading {}".format(module_name))
         logger.info("loading {}".format(module_name))
-
         module = import_module(module_name)
-        link_bots.append(getattr(module, 'LinkBot')(bot_conf))
+        bot = getattr(module, 'LinkBot')(bot_conf)
+
+        @slack_app.message(bot.match_regex())
+        def f(context, say, logger):
+            logger.debug('message context: {}'.format(context))
+
+        link_bots.append(bot)
     except Exception as ex:
         raise Exception(
             "Cannot load module {}: {}".format(module_name, ex))
 
 if not len(link_bots):
     raise Exception('No linkbots defined')
-
-# initialize slack
-slack_app = App(
-    logger=logger,
-    ssl_check_enabled=False,
-    request_verification_enabled=False)
-    #token=os.environ.get("SLACK_BOT_TOKEN")
-    #signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
-
-# prepare metrics
-linkbot_message_count = Counter(
-    'message_sent_count',
-    'LinkBot message match and sent count',
-    ['channel'])
 
 
 @slack_app.middleware
@@ -87,7 +84,7 @@ def linkbot_response(event, say, logger):
     logger.debug("linbot_response: {}".format(event))
     for bot in link_bots:
         text = event.get('text', '')
-        logger.debug("linkbot {}: match".format(bot.name(), text))
+        logger.debug("linkbot {}: match {}".format(bot.name(), text))
         for match in bot.match(text):
             logger.debug("match: {}".format(match))
             try:
@@ -100,6 +97,13 @@ def linkbot_response(event, say, logger):
             linkbot_message_count.labels(event.get('channel')).inc()
 
 
+# prepare metrics
+linkbot_message_count = Counter(
+    'message_sent_count',
+    'LinkBot message match and sent count',
+    ['channel'])
+
+# prepare event endpoint
 tornado_api = Application(
     [("/slack/events", SlackEventsHandler, dict(app=slack_app))])
 
@@ -108,7 +112,7 @@ if __name__ == '__main__':
         # open metrics exporter endpoint
         start_http_server(int(os.environ.get('METRICS_PORT', 9100)))
 
-        # start linkbot
+        # open linkbot endpoint
         tornado_api.listen(int(os.environ.get("PORT", 3000)))
         IOLoop.current().start()
     except Exception as e:

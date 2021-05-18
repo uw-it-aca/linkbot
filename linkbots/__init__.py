@@ -32,7 +32,13 @@ class LinkBot(object):
         self._quiplist = []
 
     def name(self):
-        return "linkbot ({})".format(self._regex.pattern)
+        return "linkbot ({})".format(self.match_pattern())
+
+    def match_regex(self):
+        return self._regex
+
+    def match_pattern(self):
+        return self._regex.pattern
 
     def match(self, text):
         """Return a set of unique matches for text."""
