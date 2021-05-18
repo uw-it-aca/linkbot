@@ -19,6 +19,9 @@ Run linkbot
 """
 
 from slack_bolt import App
+from slack_bolt.adapter.tornado import SlackEventsHandler
+from tornado.web import Application
+from tornado.ioloop import IOLoop
 from prometheus_client import start_http_server, Counter
 from importlib import import_module
 import sys
@@ -70,10 +73,10 @@ if not len(link_bots):
     raise Exception('No linkbots defined')
 
 # initialize slack
-slack_app = App(
-    token=os.environ.get("SLACK_BOT_TOKEN"),
-    signing_secret=os.environ.get("SLACK_SIGNING_SECRET")
-)
+slack_app = App()
+#    token=os.environ.get("SLACK_BOT_TOKEN"),
+#    signing_secret=os.environ.get("SLACK_SIGNING_SECRET")
+#)
 
 # prepare metrics
 linkbot_message_count = Counter(
@@ -104,6 +107,8 @@ def linkbot_response(body, say, logger):
             linkbot_message_count.labels(body.get('channel')).inc()
 
 
+api = Application([("/slack/events", SlackEventsHandler, dict(app=slack_app))])
+
 if __name__ == '__main__':
     configure_logging()
 
@@ -112,7 +117,8 @@ if __name__ == '__main__':
         start_http_server(int(os.environ.get('METRICS_PORT', 9100)))
 
         # start linkbot
-        slack_app.start(port=int(os.environ.get("PORT", 3000)))
+        api.listen(int(os.environ.get("PORT", 3000)))
+        IOLoop.current().start()
     except Exception as e:
         logger.exception(e)
         logger.critical(e)
