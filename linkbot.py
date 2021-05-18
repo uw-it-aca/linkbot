@@ -6,9 +6,13 @@ Configuration:
     Configuration relies on a module named "linkconfig.py"
     that contains:
 
-        1) a module variable API_TOKEN that holds the value for the
+    #token=os.environ.get("SLACK_BOT_TOKEN")
+    #signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
+
+        1) a variable SLACK_BOT_TOKEN that holds the value for the
            Slack instance acces token
-        2) a variable LINKBOTS that is a list of one or more dictionaries
+        2) a variable SLACK_SIGNING_SECRET
+        3) a variable LINKBOTS that is a list of one or more dictionaries
            defining:
             a) MATCH key that is a string within messages to match
             b) LINK that is a slack format link definition
@@ -44,10 +48,8 @@ slack_app = App(
     logger=logger,
     ssl_check_enabled=False,
     request_verification_enabled=False)
-    #token=os.environ.get("SLACK_BOT_TOKEN")
-    #signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
 
-# import and initialize linkbot responders
+# import and initialize linkbots
 link_bots = []
 for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
     try:
@@ -56,9 +58,10 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
         except KeyError:
             module_name = "linkbots"
 
-        logger.info("loading {}".format(module_name))
         module = import_module(module_name)
         bot = getattr(module, 'LinkBot')(bot_conf)
+
+        logger.info("loading {}: {}".format(bot.name(), bot.match_pattern()))
 
         @slack_app.message(bot.match_regex())
         def linkbot_message(context, say, logger):
@@ -84,7 +87,8 @@ def linkbot_event(event, say, logger):
     logger.debug("linbot_response: {}".format(event))
     for bot in link_bots:
         text = event.get('text', '')
-        logger.debug("linkbot {}: match {}".format(bot.name(), text))
+        logger.debug("{}: {} in {}".format(
+            bot.name(), bot.match_pattern(), text))
         for match in bot.match(text):
             try:
                 message = bot.message(match)
