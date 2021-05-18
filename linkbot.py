@@ -72,6 +72,8 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
         raise Exception(
             "Cannot load module {}: {}".format(module_name, ex))
 
+if len(bot_list) < 1:
+    raise Exception("No linkbots configured")
 
 # linkbot commands
 @slack_app.command("/linkbot")
@@ -92,13 +94,13 @@ def linkbot_command(ack, say, command):
     elif op == 'quips':
         arg = argv[0].lower()
         if arg == 'reset':
-            for bot_conf in bot_list:
+            for bot in bot_list:
                 bot.quip_reset()
 
             say("linkbot quips have been reset")
         else:
             sense = arg in ['on', '1', 'true']
-            for bot_conf in bot_list:
+            for bot in bot_list:
                 bot.quip(sense)
 
             say("linkbot turned {} quips".format('on' if sense else 'off'))
@@ -106,7 +108,7 @@ def linkbot_command(ack, say, command):
         for bot_conf in bot_list:
             say("linkbot searches for:\n".format("    \n".join(
                 ["{}: {}".format(
-                    bot.name(), bot.match_pattern() for bot in bot_list)])))
+                    bot.name(), bot.match_pattern()) for bot in bot_list])))
     else:
         say("sorry, linkbot cannot *{}*".format(op))
 
