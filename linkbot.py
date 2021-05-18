@@ -62,15 +62,25 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
 
         logger.info("loading {}: {}".format(bot.name(), bot.match_pattern()))
 
+        # add bot's message event handler
         slack_app.message(bot.match_regex())(bot.send_message)
 
     except Exception as ex:
         raise Exception(
             "Cannot load module {}: {}".format(module_name, ex))
 
+
+# prepare for any bot commands
+@slack_app.command("/linkbot")
+def linkbot_command(ack, say, command):
+    ack()
+    op = command.get('text', '').split[0]
+    say("operation is {}".format(op))
+
+
 # prepare event endpoint
 tornado_api = Application(
-    [("/slack/events", SlackEventsHandler, dict(app=slack_app))])
+    [("/slack/events", SlackEventsHandler, {'app': slack_app})])
 
 if __name__ == '__main__':
     try:

@@ -48,10 +48,13 @@ class LinkBot(object):
     def message(self, link_label):
         return self._message_text(self._link.format(link_label, link_label))
 
-    def send_message(self, message, say):
+    def send_message(self, message, say, logger):
         for match in self.match(message.get('text', '')):
-            say(self.message(match), parse='none')
-            metrics_counter(message.get('channel'))
+            try:
+                say(self.message(match), parse='none')
+                metrics_counter(message.get('channel'))
+            except Exception as ex:
+                logger.error("send_message: {}".format(ex))
 
     def _quip(self, link):
         try:
