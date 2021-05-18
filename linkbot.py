@@ -74,10 +74,11 @@ if not len(link_bots):
 
 # initialize slack
 slack_app = App(
-    logger=logger
-#    token=os.environ.get("SLACK_BOT_TOKEN"),
-#    signing_secret=os.environ.get("SLACK_SIGNING_SECRET")
-)
+    logger=logger,
+    ssl_check_enabled=False,
+    request_verification_enabled=False)
+    #token=os.environ.get("SLACK_BOT_TOKEN")
+    #signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
 
 # prepare metrics
 linkbot_message_count = Counter(
