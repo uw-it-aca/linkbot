@@ -43,7 +43,7 @@ class LinkBot(LinkBotBase):
 
     def __init__(self, conf):
         if 'LINK' not in conf:
-            conf['LINK'] = '<{}/browse/%s|%s>'.format(conf['HOST'])
+            conf['LINK'] = '<{}/browse/{{}}|{{}}>'.format(conf['HOST'])
         super(LinkBot, self).__init__(conf)
         self.jira = UwSamlJira(host=conf.get('HOST'),
                                auth=conf.get('AUTH'))

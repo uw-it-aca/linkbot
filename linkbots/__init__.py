@@ -8,11 +8,11 @@ class LinkBot(object):
     """
     QUIPS = [
         '{}',
-        'linkbot noticed a link!  {}',
+        'linkbot noticed a link! {}',
         'Oh, here it is... {}',
         'Maybe this, {}, will help?',
-        'Click me!  {}',
-        'Click my shiny metal link!  {}',
+        'Click me! {}',
+        'Click my shiny metal link! {}',
         'Here, let me link that for you... {}',
         'Couldn\'t help but notice {} was mentioned...',
         'Not that I was eavesdropping, but did you mention {}?',

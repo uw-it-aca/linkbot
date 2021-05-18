@@ -43,7 +43,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 logger = logging.getLogger(__name__)
 
-# initialize slack
+# initialize slack API framework
 slack_app = App(
     logger=logger,
     ssl_check_enabled=False,
@@ -74,23 +74,6 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
     except Exception as ex:
         raise Exception(
             "Cannot load module {}: {}".format(module_name, ex))
-
-
-#@slack_app.middleware
-#def log_request(logger, body, next):
-#    logger.debug("middleware log_request: {}".format(body))
-#    return next()
-
-
-#@slack_app.event("message")
-#def linkbot_event(event, say, logger):
-#    for bot in link_bots:
-#        text = event.get('text', '')
-#        logger.debug("event {}: {} in {}".format(
-#            bot.name(), bot.match_pattern(), text))
-#        for match in bot.match(text):
-#            linkbot_response(say, bot.message(match), event.get('channel'))
-
 
 # prepare metrics
 linkbot_message_count = Counter(
