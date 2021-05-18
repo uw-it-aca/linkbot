@@ -31,6 +31,9 @@ class LinkBot(object):
         self._link = conf.get('LINK', '{}|{}')
         self._quiplist = []
 
+    def name(self):
+        return "linkbot ({})".format(self._regex.pattern)
+
     def match(self, text):
         """Return a set of unique matches for text."""
         return set(match[1] for match in self._regex.findall(text))

@@ -48,6 +48,9 @@ class LinkBot(LinkBotBase):
         self.jira = UwSamlJira(host=conf.get('HOST'),
                                auth=conf.get('AUTH'))
 
+    def name(self):
+        return "jirabot"
+
     @staticmethod
     def pretty_update_time(issue):
         updated = issue.fields.updated

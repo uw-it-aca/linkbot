@@ -78,17 +78,18 @@ linkbot_message_count = Counter(
 
 @slack_app.middleware
 def log_request(logger, body, next):
-    print("called log request: {}".format(body))
     logger.debug("middleware log_request: {}".format(body))
     return next()
 
 
 @slack_app.event("message")
 def linkbot_response(event, say, logger):
-    print("called linbot_response: {}".format(event))
+    logger.debug("linbot_response: {}".format(event))
     for bot in link_bots:
-        for match in bot.match(event.get('text', '')):
-            logger.info("match: {}".format(match))
+        text = event.get('text', '')
+        logger.debug("linkbot {}: match".format(bot.name(), text))
+        for match in bot.match(text):
+            logger.debug("match: {}".format(match))
             try:
                 message = bot.message(match)
             except Exception as e:
@@ -103,8 +104,6 @@ tornado_api = Application(
     [("/slack/events", SlackEventsHandler, dict(app=slack_app))])
 
 if __name__ == '__main__':
-    configure_logging()
-
     try:
         # open metrics exporter endpoint
         start_http_server(int(os.environ.get('METRICS_PORT', 9100)))

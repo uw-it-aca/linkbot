@@ -117,6 +117,9 @@ class LinkBot(LinkBotBase):
         self.client = ServiceNowClient(
             host=conf.get('HOST'), auth=conf.get('AUTH'))
 
+    def name(self):
+        return "servicenowbot"
+
     def message(self, link_label):
         record = self.client.get_number(link_label)
         link = self._strlink(link_label)
