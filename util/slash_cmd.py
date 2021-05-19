@@ -90,8 +90,8 @@ class SlashCommand:
             say("unrecognized links option")
 
     def _indented_list(say, title, l, indent="> "):
-        say("{}:\n{}{}".format(
-            title, indent, "\n{}".format(indent).join(l)), parse='none')
+        delim = "\n{}".format(indent)
+        say("{}:{}{}".format(title, delim, delim.join(l)), parse='none')
 
     def _boolean(self, arg):
         b = arg.lower()
