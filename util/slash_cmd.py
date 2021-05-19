@@ -78,7 +78,7 @@ class SlashCommand:
             for bot in self._bot_list:
                 if bot.quip:
                     for bq in bot.QUIPS:
-                        q.add(bq)
+                        q.add(bot.escape_html(bq.format("<LINK>")))
 
             if len(q) > 0:
                 self._indented_list(say, "Current quips include", q)
@@ -87,7 +87,7 @@ class SlashCommand:
 
     def op_links(self, argv, say):
         if argv[0] is None:
-            links = ["{}: {}".format(
+            links = ["*{}* {}".format(
                 bot.name(), bot.escape_html(bot.match_pattern()))
                      for bot in self._bot_list]
             self._indented_list(say, 'Linkbot link searches', links)
