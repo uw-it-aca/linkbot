@@ -82,7 +82,7 @@ def linkbot_bot_list():
 
 
 # linkbot commands
-@slack_app.command("/linkbot")(linkbot_command)
+slack_app.command("/linkbot")(linkbot_command)
 
 # prepare event endpoint
 tornado_api = Application(
