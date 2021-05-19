@@ -26,8 +26,9 @@ class SlashCommand:
 
     def __init__(self, *args, **kwargs):
         self._bot_list = kwargs.get('bot_list', [])
+        self._logger = kwargs.get('logger', logging.getLogger(__name__))
 
-    def command(self, command, say, ack, logger):
+    def command(self, command, say, ack):
         ack()
         parts = command.get('text', '').split()
         op = parts[0].lower() if len(parts) > 0 else ''
@@ -35,26 +36,26 @@ class SlashCommand:
 
         for operation in self.OPERATIONS:
             if op in operation['name']:
-                return getattr(self, operation['method'])(argv, say, logger)
+                return getattr(self, operation['method'])(argv, say)
 
         say("sorry, linkbot cannot *{}*".format(op))
 
-    def op_help(self, argv, say, logger):
+    def op_help(self, argv, say):
         self._indented_list(say, "Hi! I'm linkbot and I can", [
             op['description'] for op in self.OPERATIONS])
 
-    def op_debug(self, argv, say, logger):
+    def op_debug(self, argv, say):
         if argv[0]:
             try:
-                logger.setLevel(logging.DEBUG if (
+                self._logger.setLevel(logging.DEBUG if (
                     self._boolean(argv[0])) else logging.INFO)
             except Exception as ex:
                 say("{} debug: {}".format(self.name, ex))
 
-        say("linkbot debug is {}".format('on' if (
-            logger.level == logging.DEBUG) else 'off'))
+        say("linkbot debug is {}".format(
+            self._boolean_state(self._logger.level == logging.DEBUG)))
 
-    def op_quips(self, argv, say, logger):
+    def op_quips(self, argv, say):
         if argv[0]:
             sub_op = argv[0].lower()
             if sub_op == 'reset':
@@ -69,18 +70,22 @@ class SlashCommand:
                         bot.quip = sense
 
                     say("Linkbot turned {} quips".format(
-                        'on' if sense else 'off'))
+                        self._boolean_state(sense)))
                 except Exception as ex:
                     say("{} quips: {}".format(self.name, ex))
         else:
             q = set()
             for bot in self._bot_list:
-                for bq in bot.QUIPS:
-                    q.add(bq)
+                if bot.quip:
+                    for bq in bot.QUIPS:
+                        q.add(bq)
 
-            self._indented_list(say, "Current quips include", q)
+            if len(q) > 0:
+                self._indented_list(say, "Current quips include", q)
+            else:
+                say("Quips are currently turned off")
 
-    def op_links(self, argv, say, logger):
+    def op_links(self, argv, say):
         if argv[0] is None:
             links = ["{}: {}".format(
                 bot.name(), bot.escape_html(bot.match_pattern()))
@@ -99,3 +104,6 @@ class SlashCommand:
             return b in ['on', '1', 'true', 'yes']
         else:
             raise Exception("invalid boolean value {}".format(arg))
+
+    def _boolean_state(self, value):
+        return 'on' if value else 'off'

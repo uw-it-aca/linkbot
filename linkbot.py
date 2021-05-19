@@ -75,7 +75,7 @@ if len(bot_list) < 1:
     logger.info("No linkbots configured")
 
 # prepare linkbot slash command
-slash_cmd = SlashCommand(bot_list=bot_list)
+slash_cmd = SlashCommand(bot_list=bot_list, logger=logger)
 slack_app.command("/{}".format(slash_cmd.name))(slash_cmd.command)
 
 # prepare slack event endpoint
