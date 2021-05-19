@@ -16,7 +16,7 @@ def linkbot_command(ack, say, command, logger):
     op = parts[0].lower() if len(parts) > 0 else ''
     argv = parts[1:] if len(parts) > 1 else [None]
     if op in ['help', '?', '']:
-        say("linkbot can:\n{}".format('   \n'.join([
+        say("linkbot can:\n>{}".format('\n> '.join([
             "debug [on|off]",
             "quips [on|off|reset]",
             "links"])), parse='none')
@@ -56,8 +56,9 @@ def linkbot_command(ack, say, command, logger):
                 parse='none')
     elif op == 'links':
         if argv[0] is None:
-            say("linkbot searches for:\n".format("    \n".join(
-                ["{}: {}".format(bot.name(), bot.match_pattern())
+            say("linkbot searches for:\n".format("\n> ".join(
+                ["{}: {}".format(
+                    bot.name(), bot.escape_html(bot.match_pattern()))
                  for bot in bot_list])), parse='none')
         else:
             say("unrecognized links option")

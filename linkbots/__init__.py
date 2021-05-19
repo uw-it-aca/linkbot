@@ -86,7 +86,7 @@ class LinkBot(object):
     def _message_text(self, link):
         return self._quip(link)
 
-    def _escape_html(self, text):
+    def escape_html(self, text):
         escaped = {
             '&': '&amp;',
             '<': '&lt;',

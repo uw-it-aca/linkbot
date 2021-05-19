@@ -72,6 +72,6 @@ class LinkBot(LinkBotBase):
         assignee = '*Assignee* ' + self._get_name(issue.fields.assignee)
         updated = '*Last Update* ' + self.pretty_update_time(issue)
         status = '*Status* ' + issue.fields.status.name
-        lines = list(map(self._escape_html,
+        lines = list(map(self.escape_html,
                          [summary, reporter, assignee, status, updated]))
         return '\n> '.join([msg] + lines)
