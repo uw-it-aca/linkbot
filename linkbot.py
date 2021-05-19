@@ -23,9 +23,9 @@ Run linkbot
 
 from slack_bolt import App
 from importlib import import_module
-from endpoint import init_endpoint_server, endpoint_server
-from slash_cmd import SlashCommand
-from metrics import metrics_server
+from util.slash_cmd import SlashCommand
+from util.metrics import metrics_server
+from util.endpoint import init_endpoint_server, endpoint_server
 import linkconfig
 import sys
 import os

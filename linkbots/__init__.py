@@ -4,7 +4,7 @@
 Class implementing linkbot matching and reporting
 """
 from random import choice
-from metrics import metrics_counter
+from util.metrics import metrics_counter
 import re
 
 
