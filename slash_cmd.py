@@ -1,6 +1,13 @@
 import logging
 
 
+def linkbot_boolean(arg):
+    if arg.lower() in ['on', 'off', 'true', 'false', '0', '1']:
+        return arg in ['on', '1', 'true']
+    else:
+        raise Exception("invalid boolean value")
+
+
 def linkbot_command(ack, say, command, logger):
     from linkbot import bot_list
 
@@ -15,12 +22,13 @@ def linkbot_command(ack, say, command, logger):
             "links"])), parse='none')
     elif op == 'debug':
         if argv[0]:
-            sense = argv[0].lower() in ['on', '1', 'true']
-            logger.setLevel(logging.DEBUG if sense else logging.INFO)
-            say("linkbot debug logging {}".format('on' if sense else 'off'),
-                parse='none')
-        else:
-            say("linkbot debug is {}".format(logger.level == logging.DEBUG))
+            try:
+                logger.setLevel(logging.DEBUG if (
+                    linkbot_boolean(argv[0])) else logging.INFO)
+            except Exception:
+                say("unrecognized debug option")
+
+        say("linkbot debug is {}".format(logger.level == logging.DEBUG))
     elif op == 'quips':
         if argv[0]:
             arg = argv[0].lower()
@@ -29,14 +37,15 @@ def linkbot_command(ack, say, command, logger):
                     bot.quip_reset()
 
                 say("linkbot quips have been reset")
-            elif arg in ['on', 'off', 'true', 'false', '0', '1']:
-                sense = arg in ['on', '1', 'true']
-                for bot in bot_list:
-                    bot.quip = sense
-
-                say("linkbot turned {} quips".format('on' if sense else 'off'))
             else:
-                say("unrecognized quips option")
+                try:
+                    sense = linkbot_boolean(arg)
+                    for bot in bot_list:
+                        bot.quip = sense
+
+                    say("linkbot turned {} quips".format('on' if sense else 'off'))
+                except Exception:
+                    say("unrecognized quips option")
         else:
             q = set()
             for bot in bot_list:
