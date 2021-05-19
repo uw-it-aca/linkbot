@@ -28,6 +28,7 @@ from tornado.web import Application
 from tornado.ioloop import IOLoop
 from importlib import import_module
 from metrics import metrics_server
+from slash_cmd import linkbot_command
 import linkconfig
 import sys
 import os
@@ -75,43 +76,13 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
 if len(bot_list) < 1:
     raise Exception("No linkbots configured")
 
+
+def linkbot_bot_list():
+    return bot_list
+
+
 # linkbot commands
-@slack_app.command("/linkbot")
-def linkbot_command(ack, say, command):
-    ack()
-    parts = command.get('text', '').split()
-    op = parts[0].lower()
-    argv = parts[1:]
-    if len(argv) == 0 or op in ['help', '?']:
-        say("linkbot can:\n{}".format('   \n'.join([
-            "debug [on|off]",
-            "quips [on|off|reset]",
-            "links"])))
-    elif op == 'debug':
-        sense = argv[0].lower() in ['on', '1', 'true']
-        logging.getLogger().setLevel(logging.DEBUG if sense else logging.INFO)
-        say("linkbot debug logging {}".format('on' if sense else 'off'))
-    elif op == 'quips':
-        arg = argv[0].lower()
-        if arg == 'reset':
-            for bot in bot_list:
-                bot.quip_reset()
-
-            say("linkbot quips have been reset")
-        else:
-            sense = arg in ['on', '1', 'true']
-            for bot in bot_list:
-                bot.quip = sense
-
-            say("linkbot turned {} quips".format('on' if sense else 'off'))
-    elif op == 'links':
-        for bot_conf in bot_list:
-            say("linkbot searches for:\n".format("    \n".join(
-                ["{}: {}".format(
-                    bot.name(), bot.match_pattern()) for bot in bot_list])))
-    else:
-        say("sorry, linkbot cannot *{}*".format(op))
-
+@slack_app.command("/linkbot")(linkbot_command)
 
 # prepare event endpoint
 tornado_api = Application(
