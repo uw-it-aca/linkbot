@@ -7,14 +7,14 @@ from linkbots import LinkBot as LinkBotBase
 from datetime import datetime
 from urllib.parse import quote
 from types import SimpleNamespace
-from . import saml
+from util.saml import UwSamlSession
 
 
 class UwSamlJira:
     """A Jira client with a saml session to handle authn on an SSO redirect"""
     def __init__(self, host='', auth=(None, None)):
         """Initialize with the basic auth so we use our _session."""
-        self._session = saml.UwSamlSession(credentials=auth)
+        self._session = UwSamlSession(credentials=auth)
         self.host = host
 
     def issue(self, issue_number):
