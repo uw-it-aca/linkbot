@@ -76,11 +76,6 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
 if len(bot_list) < 1:
     raise Exception("No linkbots configured")
 
-
-def linkbot_bot_list():
-    return bot_list
-
-
 # linkbot commands
 slack_app.command("/linkbot")(linkbot_command)
 
