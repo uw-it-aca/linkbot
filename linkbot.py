@@ -5,7 +5,7 @@
 
 Configuration:
     Configuration relies on a module named "linkconfig.py"
-    containing definitions for:
+    in the same directory as linkbot.py containing definitions for:
 
     SLACK_BOT_TOKEN - Slack instance auth
     SLACK_SIGNING_SECRET - Slack intance auth
@@ -18,7 +18,9 @@ Configuration:
 
 Run linkbot
 
-        $ docker-compose up --build
+    1) Setup a .env file for docker defining the various config
+
+    2) $ docker-compose up --build
 """
 
 from slack_bolt import App
@@ -33,7 +35,7 @@ import logging
 
 
 # setup basic logging
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format=('%(asctime)s %(levelname)s %(module)s.'
                             '%(funcName)s():%(lineno)d:'
                             ' %(message)s'),

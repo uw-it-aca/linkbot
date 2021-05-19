@@ -7,6 +7,8 @@ import logging
 
 
 class SlashCommand:
+    name = "linkbot"
+
     OPERATIONS = [
         {'name': ['help', '?', ''],
          'method': 'op_help',
@@ -25,10 +27,6 @@ class SlashCommand:
     def __init__(self, *args, **kwargs):
         self._bot_list = kwargs.get('bot_list', [])
 
-    @property
-    def name(self):
-        return "linkbot"
-
     def command(self, command, say, ack, logger):
         ack()
         parts = command.get('text', '').split()
@@ -42,8 +40,8 @@ class SlashCommand:
         say("sorry, linkbot cannot *{}*".format(op))
 
     def op_help(self, argv, say, logger):
-        say("Hi! I'm linkbot and I can:\n>{}".format('\n> '.join([
-            op['description'] for op in self.OPERATIONS])), parse='none')
+        self._indented_list(say, "Hi! I'm linkbot and I can", [
+            op['description'] for op in self.OPERATIONS])
 
     def op_debug(self, argv, say, logger):
         if argv[0]:
@@ -70,7 +68,8 @@ class SlashCommand:
                     for bot in self._bot_list:
                         bot.quip = sense
 
-                    say("linkbot turned {} quips".format('on' if sense else 'off'))
+                    say("Linkbot turned {} quips".format(
+                        'on' if sense else 'off'))
                 except Exception as ex:
                     say("{} quips: {}".format(self.name, ex))
         else:
@@ -79,20 +78,24 @@ class SlashCommand:
                 for bq in bot.QUIPS:
                     q.add(bq)
 
-            say("Current set of quips:\n{}".format(
-                "    \n".join(q)), parse='none')
+            self._indented_list(say, "Current quips include", q)
 
     def op_links(self, argv, say, logger):
         if argv[0] is None:
-            say("linkbot searches for:\n{}".format("\n> ".join(
-                ["{}: {}".format(
-                    bot.name(), bot.escape_html(bot.match_pattern()))
-                 for bot in self._bot_list])), parse='none')
+            links = ["{}: {}".format(
+                bot.name(), bot.escape_html(bot.match_pattern()))
+                     for bot in self._bot_list]
+            self._indented_list(say, 'Linkbot link searches', links)
         else:
             say("unrecognized links option")
 
+    def _indented_list(say, title, l, indent="> "):
+        say("{}:\n{}{}".format(
+            title, indent, "\n{}".format(indent).join(l)), parse='none')
+
     def _boolean(self, arg):
-        if arg.lower() in ['on', 'off', 'true', 'false', '0', '1']:
-            return arg in ['on', '1', 'true']
+        b = arg.lower()
+        if b in ['on', 'off', 'true', 'false', '0', '1', 'yes', 'no']:
+            return b in ['on', '1', 'true', 'yes']
         else:
-            raise Exception("invalid boolean value")
+            raise Exception("invalid boolean value {}".format(arg))
