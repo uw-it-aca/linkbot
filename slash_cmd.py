@@ -8,9 +8,13 @@ def linkbot_boolean(arg):
         raise Exception("invalid boolean value")
 
 
-def linkbot_command(ack, say, command, logger):
+def bot_list():
     from linkbot import bot_list
 
+    return bot_list
+
+
+def linkbot_command(ack, say, command, logger):
     ack()
     parts = command.get('text', '').split()
     op = parts[0].lower() if len(parts) > 0 else ''
@@ -28,19 +32,20 @@ def linkbot_command(ack, say, command, logger):
             except Exception:
                 say("unrecognized debug option")
 
-        say("linkbot debug is {}".format(logger.level == logging.DEBUG))
+        say("linkbot debug is {}".format('on' if (
+            logger.level == logging.DEBUG) else 'off'))
     elif op == 'quips':
         if argv[0]:
             arg = argv[0].lower()
             if arg == 'reset':
-                for bot in bot_list:
+                for bot in bot_list():
                     bot.quip_reset()
 
                 say("linkbot quips have been reset")
             else:
                 try:
                     sense = linkbot_boolean(arg)
-                    for bot in bot_list:
+                    for bot in bot_list():
                         bot.quip = sense
 
                     say("linkbot turned {} quips".format('on' if sense else 'off'))
@@ -48,7 +53,7 @@ def linkbot_command(ack, say, command, logger):
                     say("unrecognized quips option")
         else:
             q = set()
-            for bot in bot_list:
+            for bot in bot_list():
                 for bq in bot.QUIPS:
                     q.add(bq)
 
@@ -59,7 +64,7 @@ def linkbot_command(ack, say, command, logger):
             say("linkbot searches for:\n".format("\n> ".join(
                 ["{}: {}".format(
                     bot.name(), bot.escape_html(bot.match_pattern()))
-                 for bot in bot_list])), parse='none')
+                 for bot in bot_list()])), parse='none')
         else:
             say("unrecognized links option")
     else:
