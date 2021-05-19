@@ -13,8 +13,12 @@ linkbot_message_count = Counter(
 
 
 def metrics_counter(channel):
+    """ Increment message count for the channel
+    """
     linkbot_message_count.labels(channel).inc()
 
 
 def metrics_server(port):
+    """ Serve metrics requests
+    """
     start_http_server(port)
