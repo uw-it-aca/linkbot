@@ -1,3 +1,8 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+"""
+Subclass implementing integrated Jira link matching and reporting
+"""
 from linkbots import LinkBot as LinkBotBase
 from datetime import datetime
 from urllib.parse import quote

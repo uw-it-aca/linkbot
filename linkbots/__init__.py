@@ -1,3 +1,8 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+"""
+Class implementing linkbot matching and reporting
+"""
 from random import choice
 from metrics import metrics_counter
 import re

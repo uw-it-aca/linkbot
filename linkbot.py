@@ -1,34 +1,31 @@
 #!/usr/bin/env python3
-
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
 """Slackbot to sniff for message snippets that map to resource links.
 
 Configuration:
     Configuration relies on a module named "linkconfig.py"
-    that contains:
+    containing definitions for:
 
-    #token=os.environ.get("SLACK_BOT_TOKEN")
-    #signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
-
-        1) a variable SLACK_BOT_TOKEN that holds the value for the
-           Slack instance acces token
-        2) a variable SLACK_SIGNING_SECRET
-        3) a variable LINKBOTS that is a list of one or more dictionaries
-           defining:
-            a) MATCH key that is a string within messages to match
-            b) LINK that is a slack format link definition
+    SLACK_BOT_TOKEN - Slack instance auth
+    SLACK_SIGNING_SECRET - Slack intance auth
+    LINKBOTS - array of dictionaries defining links to report, containing
+        MATCH - regex used to match message link cues
+        LINK - link format used to report match
+      or
+        LINK_CLASS - linkbots.LinkBot subclass
+        plus other keys necessary to support class configuration
 
 Run linkbot
 
-        $ python linkbot.py
+        $ docker-compose up --build
 """
 
 from slack_bolt import App
-from slack_bolt.adapter.tornado import SlackEventsHandler
-from tornado.web import Application
-from tornado.ioloop import IOLoop
 from importlib import import_module
+from endpoint import init_endpoint_server, endpoint_server
+from slash_cmd import SlashCommand
 from metrics import metrics_server
-from slash_cmd import linkbot_command
 import linkconfig
 import sys
 import os
@@ -50,7 +47,6 @@ slack_app = App(
     ssl_check_enabled=False,
     request_verification_enabled=False)
 
-
 # import, initialize and register message event handlers for linkbots
 bot_list = []
 for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
@@ -70,27 +66,26 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
         slack_app.message(bot.match_regex())(bot.send_message)
 
     except Exception as ex:
-        raise Exception(
+        logger.error(
             "Cannot load module {}: {}".format(module_name, ex))
 
 if len(bot_list) < 1:
-    raise Exception("No linkbots configured")
+    logger.info("No linkbots configured")
 
-# linkbot commands
-slack_app.command("/linkbot")(linkbot_command)
+# prepare linkbot slash command
+slash_cmd = SlashCommand(bot_list=bot_list)
+slack_app.command("/{}".format(slash_cmd.name))(slash_cmd.command)
 
-# prepare event endpoint
-tornado_api = Application(
-    [("/slack/events", SlackEventsHandler, {'app': slack_app})])
+# prepare slack event endpoint
+init_endpoint_server(slack_app)
 
 if __name__ == '__main__':
     try:
         # open metrics exporter endpoint
         metrics_server(int(os.environ.get('METRICS_PORT', 9100)))
 
-        # open linkbot endpoint
-        tornado_api.listen(int(os.environ.get("PORT", 3000)))
-        IOLoop.current().start()
+        # open slack event endpoint
+        endpoint_server(int(os.environ.get("PORT", 3000)))
     except Exception as e:
         logger.exception(e)
         logger.critical(e)

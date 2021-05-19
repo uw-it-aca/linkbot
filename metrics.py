@@ -1,3 +1,8 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+"""
+Functions supporting Prometheus metrics
+"""
 from prometheus_client import start_http_server, Counter
 
 # prepare metrics
