@@ -71,13 +71,12 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
             "Cannot load module {}: {}".format(module_name, ex))
 
 if len(bot_list) < 1:
-    logger.error("No linkbots configured")
+    logger.warning("No linkbots configured")
 
 
-# flag incoming bot messages
+# flag bot-generated messages
 @slack_app.middleware
 def message_filter(payload, context, next):
-    logger.info("CONTEXT: {}".format(context))
     context['is_bot_message'] = payload.get('bot_id') is not None
     next()
 
