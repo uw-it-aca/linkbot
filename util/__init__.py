@@ -14,7 +14,7 @@ def channel_name(channel_id, client):
     if channel not in channel_cache:
         try:
             info = client.conversations_info(channel=channel_id)
-            channel_cache[channel] = info['channel']
+            channel_cache[channel] = info['channel']['name']
         except Exception:
             channel_cache[channel] = channel_id
 
