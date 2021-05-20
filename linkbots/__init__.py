@@ -57,7 +57,7 @@ class LinkBot(object):
     def send_message(self, message, say, client, logger):
         for match in self.match(message.get('text', '')):
             try:
-                if message.get('sub_type', '') in ['bot_message']:
+                if message.get('subtype', '') in ['bot_message']:
                     return
 
                 say(self.message(match), parse='none')
