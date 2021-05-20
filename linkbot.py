@@ -74,12 +74,12 @@ if len(bot_list) < 1:
     logger.error("No linkbots configured")
 
 
+# flag incoming bot messages
 @slack_app.middleware
-def message_filter(payload, logger, next):
-    if payload.get('bot_id') is None:
-        next()
-
-    logger.debug('filtered bot message')
+def message_filter(payload, context, next):
+    logger.info("CONTEXT: {}".format(context))
+    context['is_bot_message'] = payload.get('bot_id') is not None
+    next()
 
 # prepare linkbot slash command
 slash_cmd = SlashCommand(bot_list=bot_list, logger=logger)

@@ -55,7 +55,11 @@ class LinkBot(object):
     def message(self, link_label):
         return self._message_text(self._link.format(link_label, link_label))
 
-    def send_message(self, message, say, client, logger):
+    def send_message(self, message, context, say, client, logger):
+        if context.get('is_bot_message'):
+            logger.debug('Ignore bot message')
+            return
+
         for match in self.match(message.get('text', '')):
             try:
                 say(self.message(match), parse='none')
