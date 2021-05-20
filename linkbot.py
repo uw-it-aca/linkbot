@@ -46,8 +46,7 @@ logger = logging.getLogger(__name__)
 # initialize slack API framework
 slack_app = App(
     logger=logger,
-    ssl_check_enabled=False,
-    request_verification_enabled=False)
+    ssl_check_enabled=False)
 
 # import, initialize and register message event handlers for linkbots
 bot_list = []
@@ -73,6 +72,12 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
 
 if len(bot_list) < 1:
     logger.info("No linkbots configured")
+
+
+@slack_app.middleware
+def log_request(logger, body, next):
+    logger.debug(body)
+    return next()
 
 # prepare linkbot slash command
 slash_cmd = SlashCommand(bot_list=bot_list, logger=logger)
