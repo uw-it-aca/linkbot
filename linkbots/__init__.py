@@ -4,6 +4,7 @@
 Class implementing linkbot matching and reporting
 """
 from random import choice
+from util import channel_name
 from util.metrics import metrics_counter
 import re
 
@@ -57,14 +58,8 @@ class LinkBot(object):
     def send_message(self, message, say, client, logger):
         for match in self.match(message.get('text', '')):
             try:
-                if message.get('subtype', '') in ['bot_message']:
-                    return
-
                 say(self.message(match), parse='none')
-                channel_id = message.get('channel')
-                info = client.conversations_info(channel=channel_id)
-                metrics_counter(
-                    info.get('channel', {'name': channel_id}).get('name'))
+                metrics_counter(channel_name(message.get('channel'), client))
             except Exception as ex:
                 logger.error("send_message: {}".format(ex))
 
