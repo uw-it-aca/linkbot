@@ -71,13 +71,15 @@ for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
             "Cannot load module {}: {}".format(module_name, ex))
 
 if len(bot_list) < 1:
-    logger.info("No linkbots configured")
+    logger.error("No linkbots configured")
 
 
 @slack_app.middleware
-def linkbot_filter(logger, body, next):
-    logger.info("MSG FILTER: {}".format(body))
-    return next()
+def message_filter(payload, logger, next):
+    if payload.get('bot_id') is None:
+        next()
+
+    logger.debug('filtered bot message')
 
 # prepare linkbot slash command
 slash_cmd = SlashCommand(bot_list=bot_list, logger=logger)
