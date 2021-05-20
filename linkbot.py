@@ -75,8 +75,8 @@ if len(bot_list) < 1:
 
 
 @slack_app.middleware
-def linkbot_filter(logger, payload, next):
-    logger.info("MSG FILTER: {}".format(payload))
+def linkbot_filter(logger, body, next):
+    logger.info("MSG FILTER: {}".format(body))
     return next()
 
 # prepare linkbot slash command
