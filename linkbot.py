@@ -76,9 +76,19 @@ if len(bot_list) < 1:
 
 # flag bot-generated messages
 @slack_app.middleware
-def message_filter(payload, context, next):
+def message_filter(payload, context, body, next):
     context['is_bot_message'] = payload.get('bot_id') is not None
+    logger.info("is_bot_message: {}, body.event.subtype: {}".format(
+        context['is_bot_message'],
+        body.get("event", {}).get("subtype", None)))
     next()
+
+
+@slack_app.event({"type": "message"})
+def unmatched_request(logger, body):
+    logger.info("{} message ignored".format(
+        body.get("event", {}).get("subtype", None)))
+
 
 # prepare linkbot slash command
 slash_cmd = SlashCommand(bot_list=bot_list, logger=logger)
