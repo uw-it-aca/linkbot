@@ -27,20 +27,20 @@ class SlashCommand:
     _client = None
     _channel_id = None
     _user_id = None
-    _say = None
 
     def __init__(self, *args, **kwargs):
         self._bot_list = kwargs.get('bot_list', [])
         self._logger = kwargs.get('logger', logging.getLogger(__name__))
 
-    def command(self, command, client, say, ack):
+    def command(self, command, client, ack):
         ack()
-        self._logger.info("COMMAND: {}".format(command))
-        self._client = client
-        self._say = say
-        parts = command.get('text', '').split()
-        op = parts[0].lower() if len(parts) > 0 else ''
-        argv = parts[1:] if len(parts) > 1 else [None]
+
+        self._client     = client
+        self._channel_id = command.get('channel_id')
+        self._user_id    = command.get('user_id')
+        parts            = command.get('text', '').split()
+        op               = parts[0].lower() if len(parts) > 0 else ''
+        argv             = parts[1:] if len(parts) > 1 else [None]
 
         for operation in self.OPERATIONS:
             if op in operation['name']:
@@ -104,15 +104,13 @@ class SlashCommand:
 
     def _indented_list(self, title, l, indent="> "):
         delim = "\n{}".format(indent)
-        self._post("{}:{}{}".format(title, delim, delim.join(l)), parse='none')
+        self._post("{}:{}{}".format(title, delim, delim.join(l)))
 
     def _post(self, text):
-        #response = client.chat_postEphemeral(
-        #    channel="C0XXXXXX",
-        #    text=text,
-        #    user="U0XXXXXXX",
-        #    parse="none")
-        self._say(text, parse='none')
+        self._client.chat_postEphemeral(text=text,
+                                        user=self._user_id,
+                                        channel=self._channel_id,
+                                        arse="none")
 
     def _boolean(self, arg):
         b = arg.lower()
