@@ -1,3 +1,29 @@
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 2
+
+ingress:
+  enabled: true
+  type: nginx
+  tls:
+    dev-linkbot:
+      secretName: linkbot.axdd.s.uw.edu-ingress-cert
+      hosts:
+        - linkbot.axdd.s.uw.edu
+  hosts:
+    dev-linkbot:
+      host: linkbot.axdd.s.uw.edu
+      paths:
+        - "/"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+
+repo: linkbot
+instance: prod
+
+containerPort: 3000
+
 resources:
   limits:
     cpu: 500m
@@ -6,20 +32,15 @@ resources:
     cpu: 25m
     memory: 128Mi
 
-repo: linkbot
-instance: test
-
-autoscaling:
-  enabled: false
-
-replicaCount: 1
-
-containerPort: 9100
-
 service:
   enabled: true
-  type: ClusterIP
-  port: 9100
+  ports:
+    - port: 80
+      targetPort: 3000
+      name: http
+    - port: 9100
+      targetPort: 9100
+      name: metrics
 
 deploymentInitialization:
   enabled: false
@@ -29,9 +50,6 @@ image:
   tag: IMAGE_TAG
 
 daemon:
-  enabled: false
-
-ingress:
   enabled: false
 
 database:
@@ -56,7 +74,7 @@ metrics:
   enabled: true
   serviceMonitor:
     enabled: true
-    port: http
+    port: metrics
 
 readiness:
   enabled: false
@@ -66,16 +84,18 @@ lifecycle:
 
 environmentVariables:
   - name: "ENV"
-    value: "dev"
+    value: "prod"
 
 externalSecrets:
   enabled: true
   secrets:
-    - name: linkbot-secrets
+    - name: linkbot-dev-secrets
       externalKey: axdd/kv/data/linkbot/secrets
       data:
-        - name: slack-api-token
-          property: slack_api_token
+        - name: slack-bot-token
+          property: slack_bot_token
+        - name: slack-signing-secret
+          property: slack_signing_secret
         - name: jira-host
           property: jira_host
         - name: jira-api-credentials
@@ -87,22 +107,26 @@ externalSecrets:
 
 environmentVariablesSecrets:
   slack-api-token:
-    name: API_TOKEN
-    secretName: linkbot-secrets
-    secretKey: slack-api-token
+    name: SLACK_BOT_TOKEN
+    secretName: linkbot-dev-secrets
+    secretKey: slack-bot-token
+  slack-signing-secret:
+    name: SLACK_SIGNING_SECRET
+    secretName: linkbot-dev-secrets
+    secretKey: slack-signing-secret
   jira-host:
     name: JIRA_HOST
-    secretName: linkbot-secrets
+    secretName: linkbot-dev-secrets
     secretKey: jira-host
   uw-saml-credentials:
     name: UW_SAML_CREDENTIALS
-    secretName: linkbot-secrets
+    secretName: linkbot-dev-secrets
     secretKey: jira-api-credentials
   service-now-host:
     name: SERVICE_NOW_HOST
-    secretName: linkbot-secrets
+    secretName: linkbot-dev-secrets
     secretKey: service-now-host
   service-now-api-credentials:
     name: SERVICE_NOW_CREDENTIALS
-    secretName: linkbot-secrets
+    secretName: linkbot-dev-secrets
     secretKey: service-now-api-credentials

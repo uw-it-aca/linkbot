@@ -1,0 +1,18 @@
+version: '3.4'
+
+services:
+  app:
+    environment:
+      PORT: 3000
+      SLACK_BOT_TOKEN: $SLACK_BOT_TOKEN
+      SLACK_SIGNING_SECRET: $SLACK_SIGNING_SECRET
+      SERVICE_NOW_HOST: $SERVICE_NOW_HOST
+      SERVICE_NOW_CREDENTIALS: $SERVICE_NOW_CREDENTIALS      
+      JIRA_HOST: jira.example.com
+      UW_SAML_CREDENTIALS: $UW_SAML_CREDENTIALS
+    restart: always
+    container_name: app-linkbot
+    build:
+      context: .
+    ports:
+      - "3000:3000"

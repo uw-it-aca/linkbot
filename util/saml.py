@@ -1,7 +1,9 @@
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
 """Utilities for working with sites behind UW SSO."""
 import requests
 from bs4 import BeautifulSoup
-from six.moves.urllib.parse import urljoin
+from urllib.parse import urljoin
 IDP = 'https://idp.u.washington.edu/'
 
 
