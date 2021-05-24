@@ -3,7 +3,8 @@
 import os
 from ast import literal_eval
 
-API_TOKEN = os.environ.get('API_TOKEN')
+SLACK_BOT_TOKEN = os.environ.get('SLACK_BOT_TOKEN')
+SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET')
 LOG_FILE = os.environ.get('LOG_FILE', 'linkbot.log')
 JIRA_HOST = os.environ.get('JIRA_HOST')
 UW_SAML_CREDENTIALS = os.environ.get('UW_SAML_CREDENTIALS')
@@ -16,7 +17,7 @@ LINKBOTS = []
 
 if SERVICE_NOW_HOST and SERVICE_NOW_CREDENTIALS:
     LINKBOTS.append({
-        'LINK_CLASS': 'ServiceNowBot',
+        'LINK_CLASS': 'servicenowbot',
         'HOST': SERVICE_NOW_HOST,
         'AUTH': literal_eval(SERVICE_NOW_CREDENTIALS)
     })
@@ -24,7 +25,7 @@ if SERVICE_NOW_HOST and SERVICE_NOW_CREDENTIALS:
 if JIRA_HOST:
     if UW_SAML_CREDENTIALS:
         LINKBOTS.append({
-            'LINK_CLASS': 'JiraLinkBot',
+            'LINK_CLASS': 'jirabot',
             'HOST': JIRA_HOST,
             'AUTH': literal_eval(UW_SAML_CREDENTIALS)
         })

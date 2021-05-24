@@ -1,12 +1,14 @@
-import requests
-import re
-import collections
-from logging import getLogger
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
+"""
+Subclass implementing integrated Service Now link matching and reporting
+"""
+from linkbots import LinkBot as LinkBotBase
+from urllib.parse import urlencode
 from functools import partial
-from six.moves.urllib.parse import urlencode, quote
-from types import SimpleNamespace
-from . import saml
-logger = getLogger(__name__)
+import requests
+import collections
+import re
 
 
 class ServiceNowClient(requests.Session):
@@ -50,7 +52,6 @@ class ServiceNowClient(requests.Session):
             'sysparm_fields': ','.join(fields)
         }
         url += '/{table}?{query}'.format(table=table, query=urlencode(query))
-        logger.debug('GET', url)
         response = self.get(url)
         if response.status_code != 200:
             raise IOError('bad service now response ' + str(response))
@@ -112,31 +113,32 @@ class ServiceNowRecord:
             yield field, value
 
 
-class UwSamlJira:
-    """A Jira client with a saml session to handle authn on an SSO redirect"""
-    def __init__(self, host='', auth=(None, None)):
-        """Initialize with the basic auth so we use our _session."""
-        self._session = saml.UwSamlSession(credentials=auth)
-        self.host = host
+class LinkBot(LinkBotBase):
+    _ticket_regex = '|'.join(ServiceNowClient.table_map)
+    default_match = '({})[0-9]{{7,}}'.format(_ticket_regex)
 
-    def issue(self, issue_number):
-        """
-        Return a JIRA issue. Try to adhere to the same model as the
-        jira package.
-        """
-        url = "{}/rest/api/latest/issue/{}".format(
-            self.host, quote(issue_number))
-        response = self._session.get(url)
-        if response.status_code == 404:
-            raise KeyError("{} not found".format(issue_number))
+    def __init__(self, conf):
+        super(LinkBot, self).__init__(conf)
+        self.client = ServiceNowClient(
+            host=conf.get('HOST'), auth=conf.get('AUTH'))
 
-        response.raise_for_status()
-        data = response.json()
+    def name(self):
+        return "servicenowbot"
 
-        fields = SimpleNamespace(**data['fields'])
-        subobjects = ['status', 'reporter', 'assignee']
-        for subobject in subobjects:
-            objdict = getattr(fields, subobject, None)
-            if objdict:
-                setattr(fields, subobject, SimpleNamespace(**objdict))
-        return SimpleNamespace(fields=fields)
+    def message(self, link_label):
+        record = self.client.get_number(link_label)
+        link = self._strlink(link_label)
+        lines = [self._quip(link)]
+        for key, value in record.items(pretty_names=True):
+            if key == 'Subject':
+                lines.append(value or 'No subject')
+            elif key == 'Parent' and value:
+                link = self._strlink(value)
+                lines.append('*{key}* {link}'.format(key=key, link=link))
+            elif value and key != 'Number':
+                lines.append('*{key}* {value}'.format(key=key, value=value))
+        return '\n> '.join(lines)
+
+    def _strlink(self, link_label):
+        link = self.client.link(link_label)
+        return '<{link}|{label}>'.format(link=link, label=link_label)

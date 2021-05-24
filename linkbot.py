@@ -1,263 +1,105 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
+# Copyright 2021 UW-IT, University of Washington
+# SPDX-License-Identifier: Apache-2.0
 """Slackbot to sniff for message snippets that map to resource links.
 
 Configuration:
     Configuration relies on a module named "linkconfig.py"
-    that contains:
+    in the same directory as linkbot.py containing definitions for:
 
-        1) a module variable API_TOKEN that holds the value for the
-           Slack instance acces token
-        2) a variable LINKBOTS that is a list of one or more dictionaries
-           defining:
-            a) MATCH key that is a string within messages to match
-            b) LINK that is a slack format link definition
+    SLACK_BOT_TOKEN - Slack instance auth
+    SLACK_SIGNING_SECRET - Slack intance auth
+    LINKBOTS - array of dictionaries defining links to report, containing
+        MATCH - regex used to match message link cues
+        LINK - link format used to report match
+      or
+        LINK_CLASS - linkbots.LinkBot subclass
+        plus other keys necessary to support class configuration
 
 Run linkbot
 
-        $ python linkbot.py
-"""
-from slacker import Slacker
-from websocket import create_connection
-from random import choice
-from datetime import datetime
-import simplejson as json
-import re
-import sys
-import linkconfig
-from linkbot import clients
-import logging
-from logging.handlers import RotatingFileHandler
-import time
+    1) Setup a .env file for docker defining the various config
 
+    2) $ docker-compose up --build
+"""
+
+from slack_bolt import App
+from importlib import import_module
+from util.slash_cmd import SlashCommand
+from util.metrics import metrics_server
+from util.endpoint import init_endpoint_server, endpoint_server
+import linkconfig
+import sys
+import os
+import logging
+
+
+# setup basic logging
+logging.basicConfig(level=logging.INFO,
+                    format=('%(asctime)s %(levelname)s %(module)s.'
+                            '%(funcName)s():%(lineno)d:'
+                            ' %(message)s'),
+                    handlers=(logging.StreamHandler(sys.stdout),))
 
 logger = logging.getLogger(__name__)
 
+# initialize slack API framework
+slack_app = App(
+    logger=logger,
+    ssl_check_enabled=False)
 
-class LinkBot(object):
-    """Implements Slack message matching and link response
-
-    """
-    QUIPS = [
-        '%s',
-        'linkbot noticed a link!  %s',
-        'Oh, here it is... %s',
-        'Maybe this, %s, will help?',
-        'Click me!  %s',
-        'Click my shiny metal link!  %s',
-        'Here, let me link that for you... %s',
-        'Couldn\'t help but notice %s was mentioned...',
-        'Not that I was eavesdropping, but did you mention %s?',
-        'hmmmm, did you mean %s?',
-        '%s...  Mama said there\'d be days like this...',
-        '%s?  An epic, yet approachable tale...',
-        '%s?  Reminds me of a story...',
-    ]
-    default_match = r'_THIS_COULD_BE_OVERRIDDEN_'
-
-    def __init__(self, conf):
-        self._conf = conf
-        match = conf.get('MATCH', self.default_match)
-        self._regex = re.compile(r'(\A|\W)+(%s)' % match, flags=re.I)
-        self._quips = conf.get('QUIPS', self.QUIPS)
-        self._link = conf.get('LINK', '%s|%s')
-        self._quiplist = []
-        self._seen = []
-
-    def match(self, text):
-        """Return a set of unique matches for text."""
-        return set(match[1] for match in self._regex.findall(text))
-
-    def message(self, link_label):
-        return self._message_text(self._link % (link_label, link_label))
-
-    def reset(self):
-        self._seen = []
-
-    def _quip(self, link):
+# import, initialize and register message event handlers for linkbots
+bot_list = []
+for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
+    try:
         try:
-            if not len(self._quiplist):
-                self._quiplist = self._quips
+            module_name = "linkbots.{}".format(bot_conf['LINK_CLASS'])
+        except KeyError:
+            module_name = "linkbots"
 
-            quip = choice(self._quiplist)
-            self._quiplist.remove(quip)
-            return quip % link
-        except IndexError:
-            pass
+        module = import_module(module_name)
+        bot = getattr(module, 'LinkBot')(bot_conf)
+        bot_list.append(bot)
 
-        return link
+        logger.info("loading {}: {}".format(bot.name(), bot.match_pattern()))
 
-    def _message_text(self, link):
-        return self._quip(link)
+        # add bot's message event handler
+        slack_app.message(bot.match_regex())(bot.send_message)
 
-    def _escape_html(self, text):
-        escaped = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-        }
+    except Exception as ex:
+        logger.error(
+            "Cannot load module {}: {}".format(module_name, ex))
 
-        return "".join(escaped.get(c, c) for c in text)
+if len(bot_list) < 1:
+    logger.warning("No linkbots configured")
 
 
-class JiraLinkBot(LinkBot):
-    """Subclass LinkBot to customize response for JIRA links
-
-    """
-    default_match = '[A-Z]{3,}\-[0-9]+'
-
-    def __init__(self, conf):
-        if 'LINK' not in conf:
-            conf['LINK'] = '<{}/browse/%s|%s>'.format(conf['HOST'])
-        super(JiraLinkBot, self).__init__(conf)
-        self.jira = clients.UwSamlJira(host=conf.get('HOST'),
-                                       auth=conf.get('AUTH'))
-
-    @staticmethod
-    def pretty_update_time(issue):
-        updated = issue.fields.updated
-        try:
-            update_dt = datetime.strptime(updated, '%Y-%m-%dT%H:%M:%S.%f%z')
-            updated = update_dt.strftime("%Y-%m-%d %H:%M:%S")
-        except Exception:
-            pass
-        return updated
-
-    def _get_name(person):
-        return person and person.displayName or 'None'
-
-    def message(self, link_label):
-        msg = super(JiraLinkBot, self).message(link_label)
-        issue = self.jira.issue(link_label)
-        summary = issue.fields.summary
-        reporter = '*Reporter* ' + self._get_name(issue.fields.reporter)
-        assignee = '*Assignee* ' + self._get_name(issue.fields.assignee)
-        updated = '*Last Update* ' + self.pretty_update_time(issue)
-        status = '*Status* ' + issue.fields.status.name
-        lines = list(map(self._escape_html,
-                         [summary, reporter, assignee, status, updated]))
-        return '\n> '.join([msg] + lines)
+# flag bot-generated messages
+@slack_app.middleware
+def message_filter(payload, context, next):
+    context['is_bot_message'] = payload.get('bot_id') is not None
+    next()
 
 
-class ServiceNowBot(LinkBot):
-    _ticket_regex = '|'.join(clients.ServiceNowClient.table_map)
-    default_match = '(%s)[0-9]{7,}' % _ticket_regex
-
-    def __init__(self, conf):
-        super(ServiceNowBot, self).__init__(conf)
-        self.client = clients.ServiceNowClient(
-            host=conf.get('HOST'), auth=conf.get('AUTH'))
-
-    def message(self, link_label):
-        record = self.client.get_number(link_label)
-        link = self._strlink(link_label)
-        lines = [self._quip(link)]
-        for key, value in record.items(pretty_names=True):
-            if key == 'Subject':
-                lines.append(value or 'No subject')
-            elif key == 'Parent' and value:
-                link = self._strlink(value)
-                lines.append('*{key}* {link}'.format(key=key, link=link))
-            elif value and key != 'Number':
-                lines.append('*{key}* {value}'.format(key=key, value=value))
-        return '\n> '.join(lines)
-
-    def _strlink(self, link_label):
-        link = self.client.link(link_label)
-        return '<{link}|{label}>'.format(link=link, label=link_label)
+@slack_app.event({"type": "message"})
+def unmatched_request(logger, body):
+    logger.debug("acknowleding unmatched message")
 
 
-def configure_logging():
-    format = ('%(asctime)s %(levelname)s %(module)s.'
-              '%(funcName)s():%(lineno)d:'
-              ' %(message)s')
+# prepare linkbot slash command
+slash_cmd = SlashCommand(bot_list=bot_list, logger=logger)
+slack_app.command("/{}".format(slash_cmd.name))(slash_cmd.command)
 
-    logfile = getattr(linkconfig, 'LOG_FILE')
-    if not logfile or logfile == 'stdout':
-        handler = logging.StreamHandler(sys.stdout)
-    else:
-        size = 1024 * 1024
-        handler = RotatingFileHandler(
-            logfile, maxBytes=size, backupCount=1)
-
-    logging.basicConfig(level=logging.INFO, format=format, handlers=(handler,))
-
-
-class SlackReceiver:
-    """Slack websocket context that will try to reconnect on exception."""
-    def __init__(self, client):
-        self.client = client
-        self.websocket = None
-
-    def _connect(self):
-        response = self.client.rtm.start()
-        return create_connection(response.body['url'])
-
-    def __enter__(self):
-        logger.info('starting SlackReceiver')
-        self.websocket = self._connect()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        logger.info('closing SlackReceiver')
-        self.websocket.close()
-
-    def recv(self):
-        last_failure = 0
-        while True:
-            try:
-                yield self.websocket.recv()
-            except Exception as e:
-                if last_failure and time.time() - last_failure < 60:
-                    logger.critical('websocket failed twice in a minute')
-                    raise
-                logger.info('reconnecting SlackReceiver, ' + str(e))
-                last_failure = time.time()
-                self.websocket.close()
-                self.websocket = self._connect()
-
-
-def linkbot():
-    """Establish Slack connection and filter messages
-    
-    """
-    slack = Slacker(getattr(linkconfig, 'API_TOKEN'))
-    robo_id = slack.auth.test().body.get('user_id')
-    link_bots = []
-    for bot_conf in getattr(linkconfig, 'LINKBOTS', []):
-        bot_class = globals()[bot_conf.get('LINK_CLASS', 'LinkBot')]
-        link_bots.append(bot_class(bot_conf))
-
-    if not len(link_bots):
-        raise Exception('No linkbots defined')
-
-    with SlackReceiver(slack) as slack_receiver:
-        for rcv in slack_receiver.recv():
-            j = json.loads(rcv)
-
-            if j.get('type') == 'message':
-                if j.get('bot_id'):  # ignore all bots
-                    continue
-
-                for bot in link_bots:
-                    for match in bot.match(j.get('text', '')):
-                        logger.info(match + " match!")
-                        try:
-                            message = bot.message(match)
-                        except Exception as e:
-                            logger.error(e)
-                            continue
-                        slack.chat.post_message(
-                                j.get('channel'),
-                                message,
-                                as_user=robo_id,
-                                parse='none')
-
+# prepare slack event endpoint
+init_endpoint_server(slack_app)
 
 if __name__ == '__main__':
-    configure_logging()
     try:
-        linkbot()
+        # open metrics exporter endpoint
+        metrics_server(int(os.environ.get('METRICS_PORT', 9100)))
+
+        # open slack event endpoint
+        endpoint_server(int(os.environ.get("PORT", 3000)))
     except Exception as e:
         logger.exception(e)
         logger.critical(e)
