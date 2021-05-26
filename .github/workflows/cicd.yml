@@ -89,7 +89,7 @@ jobs:
           git_repo_branch: ${{ needs.context.outputs.git_repo_branch }}
 
       - name: Deployment Pipeline
-        if: needs.context.outputs.git_repo_branch == "feature/oauth-flow"
+        if: needs.context.outputs.git_repo_branch == 'feature/oauth-flow'
         uses: uw-it-aca/actions/cicd-deploy@main
         with:
           release_name: ${{ env.RELEASE_NAME }}

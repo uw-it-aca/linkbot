@@ -90,12 +90,16 @@ externalSecrets:
   enabled: true
   secrets:
     - name: linkbot-dev-secrets
-      externalKey: axdd/kv/data/linkbot/secrets
+      externalKey: axdd/kv/data/linkbot/dev/secrets
       data:
-        - name: slack-bot-token
-          property: slack_bot_token
+        - name: slack-client-id
+          property: slack_client_id
+        - name: slack-client-secret
+          property: slack_client_secret
         - name: slack-signing-secret
           property: slack_signing_secret
+        - name: slack-scopes
+          property: slack_scopes
         - name: jira-host
           property: jira_host
         - name: jira-api-credentials
@@ -106,14 +110,22 @@ externalSecrets:
           property: service_now_api_credentials
 
 environmentVariablesSecrets:
-  slack-api-token:
-    name: SLACK_BOT_TOKEN
+  slack-client-id:
+    name: SLACK_CLIENT_ID
     secretName: linkbot-dev-secrets
-    secretKey: slack-bot-token
+    secretKey: slack-client-id
+  slack-client-secret
+    name: SLACK_CLIENT_SECRET
+    secretName: linkbot-dev-secrets
+    secretKey: slack-client-secret
   slack-signing-secret:
     name: SLACK_SIGNING_SECRET
     secretName: linkbot-dev-secrets
     secretKey: slack-signing-secret
+  slack-scopes:
+    name: SLACK_SCOPES
+    secretName: linkbot-dev-secrets
+    secretKey: slack-scopes
   jira-host:
     name: JIRA_HOST
     secretName: linkbot-dev-secrets
