@@ -10,10 +10,10 @@ ingress:
     dev-linkbot:
       secretName: linkbot-dev.axdd.s.uw.edu-ingress-cert
       hosts:
-        - linkbot.axdd.s.uw.edu
+        - linkbot-dev.axdd.s.uw.edu
   hosts:
     dev-linkbot:
-      host: linkbot.axdd.s.uw.edu
+      host: linkbot-dev.axdd.s.uw.edu
       paths:
         - "/"
   annotations:
