@@ -114,7 +114,7 @@ environmentVariablesSecrets:
     name: SLACK_CLIENT_ID
     secretName: linkbot-dev-secrets
     secretKey: slack-client-id
-  slack-client-secret
+  slack-client-secret:
     name: SLACK_CLIENT_SECRET
     secretName: linkbot-dev-secrets
     secretKey: slack-client-secret
