@@ -5,7 +5,7 @@ Functions providing linkbot events endpoint
 """
 
 from slack_bolt.adapter.tornado import SlackEventsHandler
-from tornado.web import Application
+from tornado.web import Application, RequestHandler
 from tornado.ioloop import IOLoop
 
 tornado_api = None
@@ -15,7 +15,9 @@ def init_endpoint_server(slack_app):
     global tornado_api
 
     tornado_api = Application(
-        [("/slack/events", SlackEventsHandler, {'app': slack_app})])
+        [("/slack/oauth_redirect", SlackEventsHandler, {'app': slack_app}),
+         ("/slack/install", RequestHandler, {'app': slack_app}),
+         ("/slack/events", RequestHandler, {'app': slack_app})])
 
 
 # run slack event endpoing
