@@ -24,6 +24,7 @@ Run linkbot
 """
 
 from slack_bolt import App
+from slack_bolt.oauth import OAuthFlow
 from importlib import import_module
 from util.slash_cmd import SlashCommand
 from util.metrics import metrics_server
@@ -46,7 +47,29 @@ logger = logging.getLogger(__name__)
 # initialize slack API framework
 slack_app = App(
     logger=logger,
-    ssl_check_enabled=False)
+    ssl_check_enabled=False,
+    oauth_flow=OAuthFlow.sqlite3(database="./slackapp.db"))
+
+
+@slack_app.use
+def dump(context, next, logger):
+    logger.info(context)
+    next()
+
+
+@slack_app.use
+def call_apis_with_team_id(context, client, next):
+    # client.users_list()
+    client.bots_info(bot=context.bot_id)
+    next()
+
+
+# flag bot-generated messages
+@slack_app.middleware
+def message_filter(payload, context, next):
+    context['is_bot_message'] = payload.get('bot_id') is not None
+    next()
+
 
 # import, initialize and register message event handlers for linkbots
 bot_list = []
@@ -74,16 +97,19 @@ if len(bot_list) < 1:
     logger.warning("No linkbots configured")
 
 
-# flag bot-generated messages
-@slack_app.middleware
-def message_filter(payload, context, next):
-    context['is_bot_message'] = payload.get('bot_id') is not None
-    next()
-
-
 @slack_app.event({"type": "message"})
 def unmatched_request(logger, body):
     logger.debug("acknowleding unmatched message")
+
+
+@slack_app.event("team_access_granted")
+def team_access_granted(event):
+    pass
+
+
+@slack_app.event("team_access_revoked")
+def team_access_revoked(event):
+    pass
 
 
 # prepare linkbot slash command
