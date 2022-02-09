@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 """Slackbot to sniff for message snippets that map to resource links.
 

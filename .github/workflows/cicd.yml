@@ -102,6 +102,7 @@ jobs:
 
     steps:
       - name: House Keeping
+        if: needs.context.outputs.git_repo_branch == 'main'
         uses: uw-it-aca/actions/cicd-housekeeping@main
         with:
           release_name: ${{ env.RELEASE_NAME }}
