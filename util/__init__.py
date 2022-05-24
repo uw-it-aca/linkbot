@@ -1,4 +1,4 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 """
 Helper functions
@@ -8,7 +8,8 @@ channel_cache = {'None': 'None'}
 
 
 def channel_name(channel_id, client):
-    """ Given a channel id, return corresponding channel name
+    """
+    Given a channel id, return corresponding channel name
     """
     channel = str(channel_id)
     if channel not in channel_cache:

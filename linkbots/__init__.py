@@ -84,7 +84,7 @@ class LinkBot(object):
             try:
                 if len(self._quiplist) < 1:
                     self.quip_reset()
-    
+
                 quip = choice(self._quiplist)
                 self._quiplist.remove(quip)
                 return quip.format(link)

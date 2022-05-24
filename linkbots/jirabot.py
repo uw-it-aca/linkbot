@@ -11,9 +11,13 @@ from util.saml import UwSamlSession
 
 
 class UwSamlJira:
-    """A Jira client with a saml session to handle authn on an SSO redirect"""
+    """
+    A Jira client with a saml session to handle authn on an SSO redirect
+    """
     def __init__(self, host='', auth=(None, None)):
-        """Initialize with the basic auth so we use our _session."""
+        """
+        Initialize with the basic auth so we use our _session.
+        """
         self._session = UwSamlSession(credentials=auth)
         self.host = host
 
@@ -41,10 +45,10 @@ class UwSamlJira:
 
 
 class LinkBot(LinkBotBase):
-    """Subclass LinkBot to customize response for JIRA links
-
     """
-    default_match = '[A-Z]{3,}\-[0-9]+'
+    Subclass LinkBot to customize response for JIRA links
+    """
+    default_match = r'[A-Z]{3,}\-[0-9]+'
 
     def __init__(self, conf):
         if 'LINK' not in conf:

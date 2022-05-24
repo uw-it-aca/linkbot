@@ -45,10 +45,6 @@ service:
 deploymentInitialization:
   enabled: false
 
-image:
-  repository: gcr.io/uwit-mci-axdd/linkbot
-  tag: IMAGE_TAG
-
 daemon:
   enabled: false
 
@@ -90,7 +86,7 @@ externalSecrets:
   enabled: true
   secrets:
     - name: linkbot-dev-secrets
-      externalKey: axdd/kv/data/linkbot/secrets
+      externalKey: linkbot/secrets
       data:
         - name: slack-bot-token
           property: slack_bot_token

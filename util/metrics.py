@@ -1,4 +1,4 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 """
 Functions supporting Prometheus metrics
@@ -13,12 +13,14 @@ linkbot_message_count = Counter(
 
 
 def metrics_counter(channel_name):
-    """ Increment channel_name message counter
+    """
+    Increment channel_name message counter
     """
     linkbot_message_count.labels(channel_name).inc()
 
 
 def metrics_server(port):
-    """ Serve metrics requests
+    """
+    Serve metrics requests
     """
     start_http_server(port)
