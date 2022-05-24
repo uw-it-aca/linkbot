@@ -1,4 +1,4 @@
-FROM python:3.6
+FROM python:3.8
 ENV LOG_FILE stdout
 WORKDIR /app/
 ENV PYTHONUNBUFFERED 1

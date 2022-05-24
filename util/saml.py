@@ -1,6 +1,8 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
-"""Utilities for working with sites behind UW SSO."""
+"""
+Utilities for working with sites behind UW SSO.
+"""
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
@@ -8,7 +10,9 @@ IDP = 'https://idp.u.washington.edu/'
 
 
 class UwSamlSession(requests.Session):
-    """A requests.Session that checks responses for IdP redirects."""
+    """
+    A requests.Session that checks responses for IdP redirects.
+    """
     def __init__(self, credentials=(None, None)):
         self._credentials = credentials
         super(UwSamlSession, self).__init__()
@@ -40,7 +44,9 @@ class UwSamlSession(requests.Session):
 
     @staticmethod
     def _form_data(content):
-        """Return a tuple of (form url, form data) from response content."""
+        """
+        Return a tuple of (form url, form data) from response content.
+        """
         bs = BeautifulSoup(content, 'html.parser')
         form = bs.find('form')
         url = urljoin(IDP, form['action'])

@@ -1,4 +1,4 @@
-# Copyright 2021 UW-IT, University of Washington
+# Copyright 2022 UW-IT, University of Washington
 # SPDX-License-Identifier: Apache-2.0
 """
 Class implementing linkbot Slack slash command
@@ -12,10 +12,10 @@ class SlashCommand:
     OPERATIONS = [
         {'name': ['help', '?', ''],
          'method': 'op_help',
-         'description': "*[help|?|]* Offer this helpful message" },
+         'description': "*[help|?|]* Offer this helpful message"},
         {'name': ['debug'],
          'method': 'op_debug',
-         'description': "*debug [on|off]* Adjust verbose logging" },
+         'description': "*debug [on|off]* Adjust verbose logging"},
         {'name': ['quips'],
          'method': 'op_quips',
          'description': "*quips [on|off|reset]* Control link quip display"},
@@ -35,12 +35,12 @@ class SlashCommand:
     def command(self, command, client, ack):
         ack()
 
-        self._client     = client
+        self._client = client
         self._channel_id = command.get('channel_id')
-        self._user_id    = command.get('user_id')
-        parts            = command.get('text', '').split()
-        op               = parts[0].lower() if len(parts) > 0 else ''
-        argv             = parts[1:] if len(parts) > 1 else [None]
+        self._user_id = command.get('user_id')
+        parts = command.get('text', '').split()
+        op = parts[0].lower() if len(parts) > 0 else ''
+        argv = parts[1:] if len(parts) > 1 else [None]
 
         for operation in self.OPERATIONS:
             if op in operation['name']:
